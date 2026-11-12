@@ -14,13 +14,22 @@ export type ChatMessage = {
 };
 
 export type ChatRequest = {
-  provider: string;
-  model: string;
+  provider?: string;
+  model?: string;
   messages: ChatMessage[];
   max_tokens?: number;
   temperature?: number;
   tools?: unknown[];
   stream?: boolean;
+};
+
+export type SearchOptions = {
+  limit?: number;
+  provider?: string;
+  mode?: "free-first" | "deep";
+  category?: "general" | "research" | "news" | "developer" | "books";
+  language?: string;
+  recency?: "24h" | "7d" | "30d" | "90d" | "1y";
 };
 
 export class AICoreClient {
@@ -66,7 +75,7 @@ export class AICoreClient {
     return this.request("/v1/models?provider=" + encodeURIComponent(provider) + (refresh ? "&refresh=1" : ""));
   }
 
-  search(query: string, options: {limit?: number; provider?: string; mode?: "free-first" | "deep"} = {}): Promise<any> {
+  search(query: string, options: SearchOptions = {}): Promise<any> {
     return this.request("/v1/tools/web_search", {query, ...options});
   }
 
@@ -78,16 +87,21 @@ export class AICoreClient {
     return this.request("/v1/chat/completions", {...body, stream: false});
   }
 
+  freeModels(): Promise<any> {
+    return this.request("/v1/free/models");
+  }
+
   usage(): Promise<any> {
     return this.request("/v1/usage");
   }
 
   /** SSE messages are normalized OpenAI-compatible chunks, not raw vendor SSE. */
-  async *streamChat(body: ChatRequest): AsyncGenerator<any, void, unknown> {
+  async *streamChat(body: ChatRequest, signal?: AbortSignal): AsyncGenerator<any, void, unknown> {
     const response = await this.fetchImpl(this.baseUrl + "/v1/chat/completions", {
       method: "POST",
       headers: this.headers(),
       body: JSON.stringify({...body, stream: true}),
+      signal,
     });
     if (!response.ok || !response.body) throw new Error("AI Core stream HTTP " + response.status);
     const reader = response.body.getReader();

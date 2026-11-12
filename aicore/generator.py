@@ -9,7 +9,7 @@ from .registry import get_provider
 
 def generate_setup(provider_id: str, *, language="python", model="REPLACE_WITH_MODEL_ID", mode="core") -> dict:
     p = get_provider(provider_id)
-    if language not in {"python", "typescript", "swift", "curl"} or mode not in {"core", "native"}:
+    if language not in {"python", "typescript", "swift", "kotlin", "curl"} or mode not in {"core", "native"}:
         raise InvalidRequest("unsupported language or setup mode")
     if not isinstance(model, str) or not re.fullmatch(r"[A-Za-z0-9_./:+-]{1,180}", model):
         raise InvalidRequest("invalid model ID")
@@ -63,6 +63,16 @@ def generate_setup(provider_id: str, *, language="python", model="REPLACE_WITH_M
             "});\n"
             "if (!response.ok) throw new Error('AI Core HTTP ' + response.status);\n"
             "console.log(await response.json());\n")
+    elif language == "kotlin":
+        code = (
+            "import dev.aicore.client.AICoreClient\n"
+            "import org.json.JSONArray\n"
+            "import org.json.JSONObject\n\n"
+            "val client = AICoreClient(baseUrl = System.getenv(\"AI_CORE_URL\")"
+            " ?: \"http://127.0.0.1:8765\", token = System.getenv(\"AI_CORE_TOKEN\") ?: \"\")\n"
+            "println(client.chat(provider = " + json.dumps(p.id) + ", model = " + json.dumps(model)
+            + ", messages = JSONArray().put(JSONObject().put(\"role\", \"user\").put(\"content\", \"Hello!\"))))\n"
+        )
     else:
         code = (
             "import Foundation\n\n"

@@ -47,8 +47,14 @@ class AICoreClient:
         query = urllib.parse.urlencode({"provider": provider, "refresh": "1" if refresh else "0"})
         return self._send("/v1/models?" + query)
 
-    def search(self, query: str, *, limit: int = 6, provider: str | None = None, mode="free-first"):
-        body = {"query": query, "limit": limit, "mode": mode}
+    def search(self, query: str, *, limit: int = 6, provider: str | None = None,
+               mode="free-first", category: str = "general", language: str | None = None,
+               recency: str | None = None):
+        body = {"query": query, "limit": limit, "mode": mode, "category": category}
+        if language:
+            body["language"] = language
+        if recency:
+            body["recency"] = recency
         if provider:
             body["provider"] = provider
         return self._send("/v1/tools/web_search", body)
@@ -56,9 +62,13 @@ class AICoreClient:
     def fetch(self, url: str):
         return self._send("/v1/tools/web_fetch", {"url": url})
 
-    def chat(self, provider: str, model: str, messages: list[dict], **kwargs):
+    def free_models(self):
+        return self._send("/v1/free/models")
+
+    def chat(self, provider: str = "auto", model: str = "auto",
+             messages: list[dict] | None = None, **kwargs):
         return self._send("/v1/chat/completions", {
-            "provider": provider, "model": model, "messages": messages, **kwargs})
+            "provider": provider, "model": model, "messages": messages or [], **kwargs})
 
     def usage(self):
         return self._send("/v1/usage")
