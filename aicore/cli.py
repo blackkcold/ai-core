@@ -36,7 +36,7 @@ def parser():
     fetch.add_argument("url")
     setup = sub.add_parser("setup", help="Generate connection example")
     setup.add_argument("--provider", required=True)
-    setup.add_argument("--language", choices=["python", "typescript", "swift", "curl"], default="python")
+    setup.add_argument("--language", choices=["python", "typescript", "swift", "kotlin", "curl"], default="python")
     setup.add_argument("--model", default="REPLACE_WITH_MODEL_ID")
     setup.add_argument("--mode", choices=["core", "native"], default="core")
     chat = sub.add_parser("chat", help="Send one model request (requires explicit daily budget)")
