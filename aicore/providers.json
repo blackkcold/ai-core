@@ -1,0 +1,198 @@
+{
+  "schema_version": 1,
+  "verified_at": "2026-11-12",
+  "providers": [
+    {
+      "id": "openai",
+      "name": "OpenAI",
+      "base_url": "https://api.openai.com/v1",
+      "models_url": "https://api.openai.com/v1/models",
+      "protocol": "openai",
+      "auth": "bearer",
+      "key_env": "OPENAI_API_KEY",
+      "docs": "https://platform.openai.com/docs/api-reference/models",
+      "pricing": "https://openai.com/api/pricing/",
+      "regions": [
+        "global"
+      ]
+    },
+    {
+      "id": "anthropic",
+      "name": "Anthropic",
+      "base_url": "https://api.anthropic.com/v1",
+      "models_url": "https://api.anthropic.com/v1/models",
+      "protocol": "anthropic",
+      "auth": "anthropic",
+      "key_env": "ANTHROPIC_API_KEY",
+      "docs": "https://docs.anthropic.com/en/api/models-list",
+      "pricing": "https://www.anthropic.com/pricing",
+      "regions": [
+        "global"
+      ]
+    },
+    {
+      "id": "gemini",
+      "name": "Google Gemini",
+      "base_url": "https://generativelanguage.googleapis.com/v1beta",
+      "models_url": "https://generativelanguage.googleapis.com/v1beta/models",
+      "protocol": "gemini",
+      "auth": "google",
+      "key_env": "GEMINI_API_KEY",
+      "docs": "https://ai.google.dev/gemini-api/docs/models",
+      "pricing": "https://ai.google.dev/gemini-api/docs/pricing",
+      "regions": [
+        "global"
+      ]
+    },
+    {
+      "id": "deepseek",
+      "name": "DeepSeek",
+      "base_url": "https://api.deepseek.com",
+      "models_url": "https://api.deepseek.com/models",
+      "protocol": "openai",
+      "auth": "bearer",
+      "key_env": "DEEPSEEK_API_KEY",
+      "docs": "https://api-docs.deepseek.com/",
+      "pricing": "https://api-docs.deepseek.com/quick_start/pricing",
+      "regions": [
+        "global"
+      ]
+    },
+    {
+      "id": "kimi",
+      "name": "Kimi / Moonshot",
+      "base_url": "https://api.moonshot.cn/v1",
+      "models_url": "https://api.moonshot.cn/v1/models",
+      "protocol": "openai",
+      "auth": "bearer",
+      "key_env": "MOONSHOT_API_KEY",
+      "docs": "https://platform.moonshot.cn/docs",
+      "pricing": "https://platform.moonshot.cn/docs/pricing",
+      "regions": [
+        "cn"
+      ]
+    },
+    {
+      "id": "glm",
+      "name": "Z.ai / GLM",
+      "base_url": "https://open.bigmodel.cn/api/paas/v4",
+      "models_url": null,
+      "protocol": "openai",
+      "auth": "bearer",
+      "key_env": "ZHIPU_API_KEY",
+      "docs": "https://open.bigmodel.cn/dev/api",
+      "pricing": "https://open.bigmodel.cn/pricing",
+      "regions": [
+        "cn"
+      ],
+      "note": "No verified universal user-visible list-model endpoint; supply model ID explicitly."
+    },
+    {
+      "id": "openrouter",
+      "name": "OpenRouter",
+      "base_url": "https://openrouter.ai/api/v1",
+      "models_url": "https://openrouter.ai/api/v1/models",
+      "protocol": "openai",
+      "auth": "bearer",
+      "key_env": "OPENROUTER_API_KEY",
+      "docs": "https://openrouter.ai/docs/api-reference/overview",
+      "pricing": "https://openrouter.ai/models",
+      "regions": [
+        "global"
+      ]
+    },
+    {
+      "id": "ollama-local",
+      "name": "Ollama Local",
+      "base_url": "http://127.0.0.1:11434",
+      "models_url": "http://127.0.0.1:11434/api/tags",
+      "protocol": "ollama",
+      "auth": "none",
+      "key_env": "",
+      "docs": "https://docs.ollama.com/api/introduction",
+      "pricing": "https://ollama.com/",
+      "regions": [
+        "local"
+      ],
+      "note": "Loopback only; do not expose unauthenticated Ollama publicly."
+    },
+    {
+      "id": "ollama-cloud",
+      "name": "Ollama Cloud",
+      "base_url": "https://ollama.com",
+      "models_url": null,
+      "protocol": "ollama",
+      "auth": "bearer",
+      "key_env": "OLLAMA_API_KEY",
+      "docs": "https://docs.ollama.com/cloud",
+      "pricing": "https://ollama.com/pricing",
+      "regions": [
+        "global"
+      ],
+      "note": "Model IDs should be selected from the user's enabled Ollama Cloud models."
+    },
+    {
+      "id": "minimax",
+      "name": "MiniMax",
+      "base_url": "https://api.minimax.io/v1",
+      "models_url": "https://api.minimax.io/v1/models",
+      "protocol": "openai",
+      "auth": "bearer",
+      "key_env": "MINIMAX_API_KEY",
+      "docs": "https://platform.minimax.io/docs",
+      "pricing": "https://platform.minimax.io/",
+      "regions": [
+        "global",
+        "cn"
+      ],
+      "regional_base_urls": {
+        "cn": "https://api.minimax.cn/v1"
+      }
+    },
+    {
+      "id": "volcengine-ark",
+      "name": "Volcengine Ark",
+      "base_url": "https://ark.cn-beijing.volces.com/api/v3",
+      "models_url": null,
+      "protocol": "openai",
+      "auth": "bearer",
+      "key_env": "ARK_API_KEY",
+      "docs": "https://www.volcengine.com/docs/82379",
+      "pricing": "https://www.volcengine.com/pricing",
+      "regions": [
+        "cn"
+      ],
+      "note": "Model endpoint identifiers are account-managed."
+    },
+    {
+      "id": "opencode-go",
+      "name": "OpenCode Go",
+      "base_url": "https://opencode.ai/inference/go/openai/v1",
+      "models_url": "https://opencode.ai/inference/go/v1/models",
+      "protocol": "openai",
+      "auth": "bearer",
+      "key_env": "OPENCODE_API_KEY",
+      "docs": "https://opencode.ai/docs/console/go",
+      "pricing": "https://opencode.ai/docs/console/go",
+      "regions": [
+        "global"
+      ],
+      "note": "Coding agents may require additional session headers."
+    },
+    {
+      "id": "opencode-zen",
+      "name": "OpenCode Zen",
+      "base_url": "https://opencode.ai/zen/v1",
+      "models_url": "https://opencode.ai/zen/v1/models",
+      "protocol": "catalog-only",
+      "auth": "bearer",
+      "key_env": "OPENCODE_API_KEY",
+      "docs": "https://opencode.ai/docs/zen",
+      "pricing": "https://opencode.ai/docs/zen",
+      "regions": [
+        "global"
+      ],
+      "note": "Different Zen models use different native protocols; model listing only until explicit adapter selection."
+    }
+  ]
+}

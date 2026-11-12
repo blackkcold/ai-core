@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "blackkcold-ai-core"
+version = "1.0.0"
+description = "A lightweight multi-provider AI registry, model catalog, search and MCP/HTTP gateway"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [{name = "blackkcold"}]
+keywords = ["ai", "agents", "search", "models", "mcp", "gateway"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Operating System :: OS Independent"
+]
+dependencies = []
+
+[project.scripts]
+ai-core = "aicore.cli:main"
+ai-core-mcp = "aicore.mcp:main"
+
+[tool.setuptools.packages.find]
+include = ["aicore*"]
+
+[tool.setuptools.package-data]
+aicore = ["providers.json"]
