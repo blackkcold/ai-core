@@ -344,20 +344,25 @@ def _stream_objects(proto: str, response):
 
 
 class ChatGateway:
-    def __init__(self, store: Store, transport: Transport | None = None, *, timeout=60):
+    def __init__(self, store: Store, transport: Transport | None = None, *, timeout=60, daily_limit=0):
         self.store, self.transport, self.timeout = store, transport or Transport(), timeout
+        self.daily_limit = daily_limit  # explicit opt-in; zero means no billable calls
 
     def chat(self, data: dict, *, tenant: str = "local") -> dict:
         raw = validate_chat(data)
         url, proto, headers, body, model = _build_request(raw, stream=False)
         provider = raw["provider"]
+        ticket = self.store.reserve("llm:" + provider, tenant, self.daily_limit)
         usage = None
+        status = "failed"
         try:
             payload = self.transport.request_json("POST", url, headers=headers, body=body, timeout=self.timeout)
             out = _normalized(provider, model, proto, payload)
             usage = out["usage"]
+            status = "success"
             return out
         finally:
+            self.store.finish(ticket, status)
             self.store.record_llm(tenant, provider, model,
                                   usage.get("prompt_tokens") if usage else None,
                                   usage.get("completion_tokens") if usage else None)
@@ -369,8 +374,13 @@ class ChatGateway:
         reply_id = "chatcmpl-" + uuid.uuid4().hex
         counts = {"prompt_tokens": None, "completion_tokens": None}
         def generate():
+            ticket = self.store.reserve("llm:" + provider, tenant, self.daily_limit)
+            status = "failed"
             try:
                 with self.transport.open("POST", url, headers=headers, body=body, timeout=self.timeout) as response:
+                    yield {"id": reply_id, "object": "chat.completion.chunk",
+                           "provider": provider, "model": model,
+                           "choices": [{"index": 0, "delta": {"role": "assistant"}, "finish_reason": None}]}
                     for event in _stream_objects(proto, response):
                         if event.get("usage"):
                             for k, v in event["usage"].items():
@@ -385,7 +395,9 @@ class ChatGateway:
                                    "choices": [{"index": 0,
                                                "delta": event.get("delta", {}),
                                                "finish_reason": event.get("finish_reason")}]}
+                    status = "success"
             finally:
+                self.store.finish(ticket, status)
                 self.store.record_llm(tenant, provider, model,
                                       counts["prompt_tokens"], counts["completion_tokens"])
         return generate()
