@@ -14,14 +14,44 @@ services:
       AI_CORE_TOKEN: $AI_CORE_TOKEN
       AI_CORE_PROJECT_TOKENS: $AI_CORE_PROJECT_TOKENS
       AI_CORE_LLM_DAILY_LIMIT: $AI_CORE_LLM_DAILY_LIMIT
+      AI_CORE_FREE_CLOUD_DAILY_LIMIT: ${AI_CORE_FREE_CLOUD_DAILY_LIMIT:-20}
+      AI_CORE_LOCAL_MODEL: ${AI_CORE_LOCAL_MODEL:-}
       AI_CORE_SEARCH_ENABLED: $AI_CORE_SEARCH_ENABLED
       AI_CORE_ALLOW_METERED_SEARCH: $AI_CORE_ALLOW_METERED_SEARCH
       AI_CORE_SEARCH_DAILY_LIMITS: $AI_CORE_SEARCH_DAILY_LIMITS
       DEEPSEEK_API_KEY: $DEEPSEEK_API_KEY
       TAVILY_API_KEY: $TAVILY_API_KEY
       FIRECRAWL_API_KEY: $FIRECRAWL_API_KEY
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
     volumes:
       - aicore-state:/data
 
+  # Optional local inference: docker compose --profile local-llm up -d --build
+  # Ollama shares AI Core's private container network namespace (127.0.0.1).
+  ollama:
+    image: ollama/ollama:latest
+    profiles: ["local-llm"]
+    network_mode: "service:ai-core"
+    depends_on:
+      - ai-core
+    environment:
+      OLLAMA_HOST: 127.0.0.1:11434
+    volumes:
+      - ollama-models:/root/.ollama
+    restart: unless-stopped
+
+  ollama-bootstrap:
+    image: ollama/ollama:latest
+    profiles: ["local-llm"]
+    network_mode: "service:ai-core"
+    depends_on:
+      - ollama
+    entrypoint: ["/bin/sh", "-c"]
+    command: "until ollama list >/dev/null 2>&1; do sleep 2; done; ollama pull qwen3:0.6b"
+    environment:
+      OLLAMA_HOST: 127.0.0.1:11434
+    restart: "no"
+
 volumes:
   aicore-state:
+  ollama-models:
