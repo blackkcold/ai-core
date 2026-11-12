@@ -1,0 +1,52 @@
+{
+  "name": "AI Core",
+  "version": "1.0.0",
+  "release_date": "2026-11-12",
+  "api_version": "v1",
+  "providers": {
+    "model": 13,
+    "search": 6
+  },
+  "entrypoints": [
+    "ai-core",
+    "ai-core-mcp",
+    "aicore.client.AICoreClient",
+    "/v1/providers",
+    "/v1/models",
+    "/v1/models/reference",
+    "/v1/tools/web_search",
+    "/v1/tools/web_fetch",
+    "/v1/chat/completions",
+    "/v1/usage"
+  ],
+  "clients": [
+    "Python",
+    "TypeScript",
+    "Swift",
+    "Kotlin (Android)"
+  ],
+  "checks": [
+    "Python 3.11 tests",
+    "Python 3.12 tests",
+    "Python 3.13 tests",
+    "TypeScript strict typecheck",
+    "Swift native typecheck",
+    "Docker build and local health"
+  ],
+  "defaults": {
+    "http_bind": "127.0.0.1:8765",
+    "model_daily_limit": 0,
+    "search_metered": false,
+    "search_keyless": [
+      "tavily",
+      "firecrawl"
+    ]
+  },
+  "notes": [
+    "Vendor API key and live paid model test are operator-supplied; not exercised by offline CI",
+    "Models.dev is optional unverified third-party reference metadata; never authoritative billing",
+    "Provider quota counters record local dispatches, not vendor credit balance",
+    "No downstream application repositories are migrated as part of this independent core release",
+    "OpenCode Zen remains catalog-only until a model-specific native protocol is selected"
+  ]
+}
