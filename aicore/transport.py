@@ -55,11 +55,13 @@ class Transport:
             raise ProviderUnavailable("upstream connection failed") from None
 
     def request_json(self, method: str, url: str, *, headers: dict | None = None,
-                     body: dict | None = None, timeout: int = 20) -> dict:
+                     body: dict | None = None, timeout: int = 20, max_bytes: int = MAX_RESPONSE_BYTES) -> dict:
         with self.open(method, url, headers=headers, body=body, timeout=timeout) as response:
-            payload = response.read(MAX_RESPONSE_BYTES + 1)
-            if len(payload) > MAX_RESPONSE_BYTES:
-                raise InvalidRequest("upstream response exceeds 2 MB")
+            if not 1 <= max_bytes <= 24_000_000:
+                raise InvalidRequest("invalid upstream response size budget")
+            payload = response.read(max_bytes + 1)
+            if len(payload) > max_bytes:
+                raise InvalidRequest("upstream response exceeds configured size budget")
             try:
                 result = json.loads(payload.decode("utf-8"))
             except (ValueError, UnicodeDecodeError):
