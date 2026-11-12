@@ -25,6 +25,8 @@ def spec() -> dict:
             "query": {"type": "string", "minLength": 1, "maxLength": 600},
             "limit": {"type": "integer", "minimum": 1, "maximum": 20},
             "provider": {"type": "string"},
+            "language": {"type": "string"},
+            "category": {"type": "string", "enum": ["general", "research", "news", "developer", "books"]},
             "recency": {"type": ["string", "null"], "enum": ["24h", "7d", "30d", "90d", "1y", None]},
             "mode": {"type": "string", "enum": ["free-first", "deep"]},
             "max_attempts": {"type": "integer", "minimum": 1, "maximum": 6}}},

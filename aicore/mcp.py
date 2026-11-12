@@ -21,6 +21,8 @@ TOOLS = [
      "inputSchema": {"type": "object", "properties": {
          "query": {"type": "string"}, "limit": {"type": "integer", "minimum": 1, "maximum": 20},
          "recency": {"type": "string"}, "provider": {"type": "string"},
+         "category": {"type": "string", "enum": ["general", "research", "news", "developer", "books"]},
+         "language": {"type": "string"},
          "mode": {"type": "string", "enum": ["free-first", "deep"]}},
          "required": ["query"]}},
     {"name": "web_fetch", "description": "Fetch public HTTPS textual page via pinned-DNS safe reader.",

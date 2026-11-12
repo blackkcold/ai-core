@@ -21,6 +21,7 @@ from .settings import Settings
 from .store import Store
 from .transport import Transport
 from .search_free import PUBLIC_SEARCH, search_public
+from .search_extra import EXTRA_SEARCH, search_extra
 
 
 SEARCH_PROVIDERS = {
@@ -44,10 +45,13 @@ for _public_id, _source in PUBLIC_SEARCH.items():
         "supports_recency": _source["recency"], "keyless": True,
     }
 
+SEARCH_PROVIDERS.update(EXTRA_SEARCH)
+
 DEFAULT_ORDER = (
     "wikipedia", "hackernews", "openalex", "crossref", "europepmc",
     "stackoverflow", "openlibrary", "tavily", "firecrawl",
     "tinyfish", "parallel", "exa", "brave",
+    "perplexity", "you", "jina", "newsapi", "searxng",
 )
 RECENCY_DAYS = {"24h": 1, "7d": 7, "30d": 30, "90d": 90, "1y": 365}
 _REGEX_TAG = re.compile(r"<[^>]*>")
@@ -173,6 +177,8 @@ def _call(provider: str, q: SearchQuery, key: str, transport: Transport, timeout
     endpoint = SEARCH_PROVIDERS[provider]["endpoint"]
     if provider in PUBLIC_SEARCH:
         return _hits(provider, search_public(provider, q, transport, timeout))
+    if provider in EXTRA_SEARCH:
+        return _hits(provider, search_extra(provider, q, key, transport, timeout))
     if provider == "tavily":
         headers = {"Authorization": "Bearer " + key} if key else {"X-Tavily-Access-Mode": "keyless"}
         payload = {"query": q.query, "search_depth": "basic", "max_results": q.limit,
