@@ -162,7 +162,8 @@ class Service:
                             **spec, "enabled": spec["id"] in service.settings.search_enabled,
                             "has_key": bool(os.getenv(spec["env"], "").strip()),
                             "metered_allowed": service.settings.search_allow_metered,
-                            "local_daily_limit": service.settings.search_daily_limits.get(spec["id"])}
+                            "local_daily_limit": service.settings.search_daily_limits.get(spec["id"]),
+                            **service.store.quota_snapshot(spec["id"])}
                             for spec in list_search_providers()]}
                     elif path == "/v1/models/reference":
                         provider = (params.get("provider") or [""])[0]

@@ -352,7 +352,7 @@ class ChatGateway:
         raw = validate_chat(data)
         url, proto, headers, body, model = _build_request(raw, stream=False)
         provider = raw["provider"]
-        ticket = self.store.reserve("llm:" + provider, tenant, self.daily_limit)
+        ticket = self.store.reserve("llm:global", tenant, self.daily_limit)
         usage = None
         status = "failed"
         try:

@@ -15,9 +15,12 @@ public struct AICoreClient {
 
     private func request(_ path: String, method: String = "GET",
                          query: [URLQueryItem] = [], body: [String: Any]? = nil) async throws -> Data {
-        guard path.hasPrefix("/v1/"), var components = URLComponents(
-            url: baseURL.appendingPathComponent(String(path.dropFirst())), resolvingAgainstBaseURL: false
-        ) else {
+        guard path.hasPrefix("/v1/") else { throw URLError(.badURL) }
+        var url = baseURL
+        for component in path.split(separator: "/") {
+            url.appendPathComponent(String(component))
+        }
+        guard var components = URLComponents(url: url, resolvingAgainstBaseURL: false) else {
             throw URLError(.badURL)
         }
         if !query.isEmpty { components.queryItems = query }

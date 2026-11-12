@@ -13,8 +13,8 @@ def truthy(value: str) -> bool:
     return value.strip().lower() in {"1", "true", "on", "yes"}
 
 
-def _parse_budgets(raw: str) -> dict[str, int]:
-    budgets = {"tavily": 100, "firecrawl": 40}
+def _parse_budgets(raw: str, *, include_keyless_defaults: bool = True) -> dict[str, int]:
+    budgets = {"tavily": 100, "firecrawl": 40} if include_keyless_defaults else {}
     if not raw.strip():
         return budgets
     for part in raw.split(","):
@@ -45,7 +45,7 @@ class Settings:
     def from_env(cls) -> "Settings":
         defaults = cls()
         enabled = tuple(p.strip() for p in os.getenv("AI_CORE_SEARCH_ENABLED", "tavily,firecrawl").split(",") if p.strip())
-        monthly = _parse_budgets(os.getenv("AI_CORE_SEARCH_MONTHLY_LIMITS", "")) if os.getenv("AI_CORE_SEARCH_MONTHLY_LIMITS") else {}
+        monthly = _parse_budgets(os.getenv("AI_CORE_SEARCH_MONTHLY_LIMITS", ""), include_keyless_defaults=False)
         try:
             project_tokens = json.loads(os.getenv("AI_CORE_PROJECT_TOKENS", "{}"))
         except ValueError as exc:

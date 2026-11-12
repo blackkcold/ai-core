@@ -65,7 +65,7 @@ export AI_CORE_SEARCH_DAILY_LIMITS=tavily=50,firecrawl=20,tinyfish=30,parallel=1
 export TINYFISH_API_KEY="YOUR_SEARCH_KEY"
 ~~~
 
-Keyed search may incur credits or money. Official free quotas can change; **configure local caps lower than actual available budgets**. No automatic escalation to keyed routes is permitted without enabling metered search. The local SQLite ledger is NOT a substitute for the vendor's invoice or credit balance.
+Keyed search may incur credits or money. Official free quotas can change; **configure local caps lower than actual available budgets**. The LLM daily-call allowance is shared across all model providers. No automatic escalation to keyed routes is permitted without enabling metered search. The local SQLite ledger is NOT a substitute for the vendor's invoice or credit balance.
 
 ### Chat
 

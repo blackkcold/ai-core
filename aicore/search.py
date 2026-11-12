@@ -314,4 +314,4 @@ class SearchRouter:
             return out
         if attempted == 0:
             raise ProviderUnavailable("no search provider is eligible; check configuration, keys and budgets")
-        raise ProviderUnavailable("all enabled search providers returned no usable results")
+        return out  # return empty hits with provider-specific failure provenance

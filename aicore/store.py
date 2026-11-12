@@ -125,6 +125,20 @@ class Store:
                             (key, json.dumps(value, ensure_ascii=False),
                              int(self.clock()) + ttl_seconds))
 
+    def quota_snapshot(self, provider: str) -> dict:
+        now = int(self.clock())
+        with self.lock:
+            counts = {}
+            for kind in ("day", "month"):
+                window = self._window(now, kind)
+                row = self.db.execute(
+                    "SELECT used FROM quotas WHERE provider=? AND kind=? AND window=?",
+                    (provider, kind, window)).fetchone()
+                counts["used_today" if kind == "day" else "used_this_month"] = (
+                    row["used"] if row else 0)
+        counts["cooldown_seconds"] = self.cooldown(provider)
+        return counts
+
     def cooldown(self, provider: str) -> int:
         with self.lock:
             row = self.db.execute("SELECT until FROM cooldowns WHERE provider=?", (provider,)).fetchone()
