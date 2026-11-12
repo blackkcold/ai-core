@@ -14,7 +14,7 @@ class RegistryTests(unittest.TestCase):
         self.assertGreaterEqual(len(items), 12)
         self.assertEqual(len({x.id for x in items}), len(items))
         for item in items:
-            self.assertTrue(item.base_url.startswith("https://") or item.id == "ollama-local")
+            self.assertTrue(item.base_url.startswith("https://") or item.id in {"ollama-local", "lm-studio-local"})
 
     def test_unknown_provider(self):
         with self.assertRaises(RegistryError):
