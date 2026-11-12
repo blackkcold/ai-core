@@ -73,7 +73,8 @@ class PublicSearchTests(unittest.TestCase):
         self.assertEqual(result["attempts"], 1)
 
     def test_category_routes_to_specific_corpus(self):
-        cfg = Settings()
+        cfg = replace(Settings(), search_enabled=("wikipedia", "hackernews",
+            "openalex", "crossref", "europepmc", "stackoverflow", "openlibrary"))
         router = SearchRouter(cfg, self.store, self.transport)
         self.assertEqual(router.search({"query": "startup", "category": "news"})["providers"],
                          ["hackernews"])
