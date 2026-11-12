@@ -13,7 +13,7 @@ A lightweight, MIT-licensed AI integration core for multiple applications.
 
 - 22 model-provider profiles, official model discovery and free-model discovery
 - Chat, tool calls, normalized streaming and OpenAI/Anthropic/Gemini/Ollama adapters
-- 18 search sources: credential-free public sources, opt-in keyed APIs and self-hosted search
+- 19 search sources: credential-free public sources, opt-in keyed APIs and self-hosted search
 - Authenticated REST gateway, MCP tools, safe HTTPS reader, caching and usage quotas
 - Python, TypeScript, Swift and Kotlin clients; Docker or local deployment
 - Local-first free inference with Ollama or LM Studio; optional keyed OpenRouter free route
@@ -49,7 +49,7 @@ ai-core search "research papers" --provider openalex
 ai-core search "startup news" --provider hackernews
 ```
 
-The default keyless providers are **specialist data sources**, not a complete general-web search engine. Select `category=research|news|developer|books` in the HTTP/MCP request to route by corpus.
+Default web search uses the official keyless You.com MCP evaluation profile (up to 100 provider queries/day); specialist public indexes cover research/reference. Free quotas and uptime are vendor-controlled. Select `category=research|news|developer|books` in the HTTP/MCP request to route by corpus.
 
 ## Docker
 
@@ -57,6 +57,8 @@ The default keyless providers are **specialist data sources**, not a complete ge
 cp .env.example .env
 export AI_CORE_TOKEN="$(python -c 'import secrets;print(secrets.token_urlsafe(32))')"
 docker compose up -d --build
+# Optional local inference; pulls ~523 MB model:
+docker compose --profile local-llm up -d --build
 ```
 
 Configure search keys and paid budgets explicitly in the environment. Docker does not automatically inherit a host-only local LLM server.

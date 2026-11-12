@@ -13,7 +13,7 @@
 
 - 22 个模型 Provider 配置、官方模型发现与免费模型发现
 - 统一对话、工具调用、流式输出及多协议适配
-- 18 个搜索来源：免密钥公共数据源、可选 API、自建搜索
+- 19 个搜索来源：免密钥公共数据源、可选 API、自建搜索
 - REST、MCP、安全网页读取、身份认证、缓存与用量管理
 - Python、TypeScript、Swift、Kotlin 客户端
 - Ollama / LM Studio 本地免费模型优先；可选 OpenRouter 免费模型路由
@@ -49,7 +49,7 @@ ai-core search "论文检索" --provider openalex
 ai-core search "科技新闻" --provider hackernews
 ```
 
-默认免密钥搜索提供**专门领域的数据源**，不等同于完整互联网网页搜索。REST/MCP 可使用 `category=research|news|developer|books` 指定检索类别。
+默认通用搜索使用 You.com 官方无密钥 MCP 免费档（服务商公布每日 100 次），研究、新闻和资料来源使用专门数据源。额度及可用性由服务商控制。REST/MCP 可使用 `category=research|news|developer|books` 指定检索类别。
 
 ## Docker
 
@@ -57,6 +57,8 @@ ai-core search "科技新闻" --provider hackernews
 cp .env.example .env
 export AI_CORE_TOKEN="$(python -c 'import secrets;print(secrets.token_urlsafe(32))')"
 docker compose up -d --build
+# 可选本地推理：自动拉取约 523 MB 免费模型
+docker compose --profile local-llm up -d --build
 ```
 
 密钥、付费权限及预算需显式配置；容器内无法自动访问宿主机的本地模型服务。

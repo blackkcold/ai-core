@@ -11,9 +11,11 @@ ai-core search-providers
 ai-core serve
 ```
 
-The API binds to `127.0.0.1:8765` by default. Search works without vendor credentials against the enabled specialist public sources. `/healthz` only proves that the gateway process is alive.
+The API binds to `127.0.0.1:8765` by default. Search works without vendor credentials: general-web uses You.com's official keyless MCP evaluation profile (advertised up to 100/day); specialist public indexes cover categorized research/reference. `/healthz` only proves that the gateway process is alive.
 
-To enable no-key local inference, install and start Ollama, then run `ai-core setup-free` to explicitly download `qwen3:0.6b`; alternatively start LM Studio with an installed model. `ai-core chat --prompt "Hello"` auto-selects only installed local models, then an explicitly keyed `openrouter/free` if present. It never silently routes to paid models.
+For Docker no-key local inference, run `docker compose --profile local-llm up -d --build`. This starts an Ollama service sharing AI Core's container network namespace, plus a one-shot download of `qwen3:0.6b` (~523 MB). The profile is optional to avoid unexpected disk/RAM use. Model chat becomes ready after download.
+
+To enable no-key local inference outside Docker, install and start Ollama, then run `ai-core setup-free` to explicitly download `qwen3:0.6b`; alternatively start LM Studio with an installed model. `ai-core chat --prompt "Hello"` auto-selects only installed local models, then an explicitly keyed `openrouter/free` if present. It never silently routes to paid models.
 
 ## Docker
 

@@ -52,6 +52,6 @@ docker compose config
 - `AI_CORE_LLM_DAILY_LIMIT=0` blocks metered cloud calls. Explicit `openrouter/free` uses an independent guarded free quota, but still requires a key.
 - `AI_CORE_FREE_CLOUD_DAILY_LIMIT` defaults to 20 local attempts/day; official quota can differ.
 - Ollama `:cloud` routes are **not** assumed free even via a localhost gateway.
-- Default public search is not proof of a whole-web index, reliability SLA or unlimited allowance.
+- You.com's free hosted MCP is an evaluation profile (provider currently advertises 100/day; local default 60/day). It may be rate-limited or unavailable. Specialist indexes provide separate limited corpora.
 - The SQLite counter counts dispatches, not vendor invoice totals; use one shared ledger per deployment, not divergent replicas.
 - Public web material is untrusted and must never be executed as model instructions.

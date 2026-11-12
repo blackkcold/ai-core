@@ -5,7 +5,7 @@
 1. **aicore.registry / providers.json**: static, versioned, audited endpoint and protocol registry. No user-controlled upstream URL at request time.
 2. **aicore.models**: live /models or vendor-native /api/tags discovery; account-specific cache, no fabricated model availability.
 3. **aicore.llm**: OpenAI-compatible, Anthropic Messages, Gemini generateContent and Ollama chat request/response adapters; structured tool calls; normalized streaming. Adapter errors are safe and hide upstream bodies.
-4. **aicore.search**: six distinct search contracts and multi-provider routing. Free-first is the default; deep mode aggregates and deduplicates at most three providers by default.
+4. **aicore.search**: nineteen search contracts, including keyless hosted general-web MCP and specialist public sources and multi-provider routing. Free-first is the default; deep mode aggregates and deduplicates at most three providers by default.
 5. **aicore.webfetch**: HTTPS-only, port 443 only; resolves host to public IP and pins the TCP connection to validated IP while using original TLS SNI; rejects redirects, oversized/binary pages and private DNS answers.
 6. **aicore.store**: SQLite transactional pre-dispatch reservations, cooldowns, tenant-aware cache, and model token usage. Failure attempts remain counted.
 7. **aicore.service / aicore.mcp**: optional HTTP and stdio tools; no implicit cross-project writes.

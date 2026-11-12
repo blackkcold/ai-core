@@ -14,6 +14,7 @@ A registered provider does **not** prove a valid account, model permission, enab
 
 | Source | Category | No API key | Recency |
 |---|---|---:|---|
+| You.com free MCP | live general web/news | Yes (free eval) | Day/week/month/year; not exact 90d |
 | Wikipedia | general reference | Yes | No (page revision is not publication date) |
 | HN Algolia | technology news | Yes | Yes |
 | OpenAlex | academic | Yes (limited) | Yes |
@@ -25,7 +26,7 @@ A registered provider does **not** prove a valid account, model permission, enab
 | Tavily, Firecrawl, TinyFish, Parallel, Exa, Brave | vendor APIs | Key/terms dependent | Provider-dependent |
 | Perplexity, You.com, Jina, NewsAPI | vendor APIs | Key required for REST | Provider-dependent |
 
-The 18 registered search entries have separate corpora, not interchangeable full-text coverage. NewsAPI's free developer tier may **not** be used in production. You.com's separate free MCP profile is not equivalent to its keyed REST API.
+The 19 registered entries include keyless general-web search and specialist corpora. The hosted MCP free tier is evaluation-only and does not guarantee availability. NewsAPI's free developer tier may **not** be used in production. You.com's separate free MCP profile is not equivalent to its keyed REST API.
 
 ## Cross-platform clients
 
