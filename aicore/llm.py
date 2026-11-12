@@ -17,6 +17,7 @@ from .models import credential_headers
 from .registry import get_provider
 from .store import Store
 from .transport import Transport
+from .free import LOCAL_PROVIDERS, choose_free_model, local_is_unmetered, free_cloud_route
 
 MODEL_PATTERN = re.compile(r"^[a-zA-Z0-9_./:+-]{1,180}$")
 MAX_REQUEST_BYTES = 256_000
@@ -351,15 +352,41 @@ def _stream_objects(proto: str, response):
 
 
 class ChatGateway:
-    def __init__(self, store: Store, transport: Transport | None = None, *, timeout=60, daily_limit=0):
+    def __init__(self, store: Store, transport: Transport | None = None, *,
+                 timeout=60, daily_limit=0, free_cloud_daily_limit=20):
         self.store, self.transport, self.timeout = store, transport or Transport(), timeout
-        self.daily_limit = daily_limit  # explicit opt-in; zero means no billable calls
+        self.daily_limit = daily_limit  # zero disables ordinary billable cloud requests
+        self.free_cloud_daily_limit = free_cloud_daily_limit
+
+    def _prepare(self, data: dict) -> dict:
+        if not isinstance(data, dict):
+            raise InvalidRequest("chat request must be an object")
+        provider, model = data.get("provider", "auto"), data.get("model", "auto")
+        if provider == "auto":
+            if model not in ("auto", None):
+                raise InvalidRequest("auto provider requires auto model selection")
+            chosen_provider, chosen_model = choose_free_model(
+                self.transport, timeout=min(self.timeout, 4))
+            data = {**data, "provider": chosen_provider, "model": chosen_model}
+        elif provider in LOCAL_PROVIDERS and model in ("auto", None):
+            chosen_provider, chosen_model = choose_free_model(
+                self.transport, preferred_provider=provider,
+                timeout=min(self.timeout, 4))
+            data = {**data, "provider": chosen_provider, "model": chosen_model}
+        return validate_chat(data)
+
+    def _reserve(self, tenant: str, provider: str, model: str):
+        if local_is_unmetered(provider, model):
+            return None
+        if free_cloud_route(provider, model):
+            return self.store.reserve("llm:free", tenant, self.free_cloud_daily_limit)
+        return self.store.reserve("llm:global", tenant, self.daily_limit)
 
     def chat(self, data: dict, *, tenant: str = "local") -> dict:
-        raw = validate_chat(data)
+        raw = self._prepare(data)
         url, proto, headers, body, model = _build_request(raw, stream=False)
         provider = raw["provider"]
-        ticket = self.store.reserve("llm:global", tenant, self.daily_limit)
+        ticket = self._reserve(tenant, provider, model)
         usage = None
         status = "failed"
         try:
@@ -369,19 +396,20 @@ class ChatGateway:
             status = "success"
             return out
         finally:
-            self.store.finish(ticket, status)
+            if ticket is not None:
+                self.store.finish(ticket, status)
             self.store.record_llm(tenant, provider, model,
                                   usage.get("prompt_tokens") if usage else None,
                                   usage.get("completion_tokens") if usage else None)
 
     def stream(self, data: dict, *, tenant: str = "local"):
-        raw = validate_chat({**data, "stream": True})
+        raw = self._prepare({**data, "stream": True})
         url, proto, headers, body, model = _build_request(raw, stream=True)
         provider = raw["provider"]
         reply_id = "chatcmpl-" + uuid.uuid4().hex
         counts = {"prompt_tokens": None, "completion_tokens": None}
         def generate():
-            ticket = self.store.reserve("llm:global", tenant, self.daily_limit)
+            ticket = self._reserve(tenant, provider, model)
             status = "failed"
             try:
                 with self.transport.open("POST", url, headers=headers, body=body, timeout=self.timeout) as response:
@@ -404,7 +432,8 @@ class ChatGateway:
                                                "finish_reason": event.get("finish_reason")}]}
                     status = "success"
             finally:
-                self.store.finish(ticket, status)
+                if ticket is not None:
+                    self.store.finish(ticket, status)
                 self.store.record_llm(tenant, provider, model,
                                       counts["prompt_tokens"], counts["completion_tokens"])
         return generate()

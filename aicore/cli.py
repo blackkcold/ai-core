@@ -21,7 +21,7 @@ def parser():
     sub.add_parser("providers", help="List LLM providers")
     sub.add_parser("search-providers", help="List search adapters")
     models = sub.add_parser("models", help="Discover live provider models")
-    models.add_argument("--provider", required=True)
+    models.add_argument("--provider", default="auto")
     models.add_argument("--refresh", action="store_true")
     reference = sub.add_parser("model-reference", help="Opt-in Models.dev reference prices and capabilities")
     reference.add_argument("--provider", required=True)
@@ -40,9 +40,12 @@ def parser():
     setup.add_argument("--model", default="REPLACE_WITH_MODEL_ID")
     setup.add_argument("--mode", choices=["core", "native"], default="core")
     chat = sub.add_parser("chat", help="Send one model request (requires explicit daily budget)")
-    chat.add_argument("--provider", required=True)
-    chat.add_argument("--model", required=True)
+    chat.add_argument("--provider", default="auto")
+    chat.add_argument("--model", default="auto")
     chat.add_argument("--prompt", required=True)
+    sub.add_parser("free-models", help="Show available local and key-required free-tier models")
+    bootstrap = sub.add_parser("setup-free", help="Download a small free model using installed Ollama (explicit opt-in)")
+    bootstrap.add_argument("--model", default="qwen3:0.6b")
     sub.add_parser("usage", help="Display local request and model usage")
     return p
 
@@ -61,6 +64,15 @@ def main(argv=None):
             from .mcp import main as mcp_main
             mcp_main()
             return 0
+        elif args.command == "setup-free":
+            import re
+            import shutil
+            import subprocess
+            if not re.fullmatch(r"[A-Za-z0-9_.:/+-]{1,180}", args.model):
+                raise ValueError("invalid local model ID")
+            if not shutil.which("ollama"):
+                raise ValueError("Ollama is not installed; visit https://ollama.com/download")
+            return subprocess.run(["ollama", "pull", args.model], check=False).returncode
         else:
             service = Service(Settings.from_env())
             if args.command == "serve":
@@ -79,6 +91,9 @@ def main(argv=None):
                 elif args.command == "chat":
                     value = service.chat.chat({"provider": args.provider, "model": args.model,
                                                "messages": [{"role": "user", "content": args.prompt}]})
+                elif args.command == "free-models":
+                    from .free import free_catalog
+                    value = free_catalog(service.chat.transport)
                 elif args.command == "usage":
                     value = {"search": service.store.usage(), "llm": service.store.llm_usage()}
                 else:

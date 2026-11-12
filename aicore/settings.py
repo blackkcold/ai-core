@@ -43,6 +43,7 @@ class Settings:
     search_monthly_limits: dict[str, int] = field(default_factory=dict)
     search_allow_metered: bool = False
     llm_daily_limit: int = 0
+    free_cloud_daily_limit: int = 20
     project_tokens: dict[str, str] = field(default_factory=dict)
     allowed_origins: tuple[str, ...] = ()
     search_cache_seconds: int = 3600
@@ -85,6 +86,7 @@ class Settings:
             search_monthly_limits=monthly,
             search_allow_metered=truthy(os.getenv("AI_CORE_ALLOW_METERED_SEARCH", "0")),
             llm_daily_limit=int(os.getenv("AI_CORE_LLM_DAILY_LIMIT", "0")),
+            free_cloud_daily_limit=int(os.getenv("AI_CORE_FREE_CLOUD_DAILY_LIMIT", "20")),
             project_tokens=project_tokens,
             allowed_origins=origins,
             search_cache_seconds=int(os.getenv("AI_CORE_SEARCH_CACHE_SECONDS", "3600")),
@@ -98,6 +100,8 @@ class Settings:
             raise ValueError("AI_CORE_SEARCH_CACHE_SECONDS must be 0..86400")
         if obj.llm_daily_limit < 0:
             raise ValueError("AI_CORE_LLM_DAILY_LIMIT cannot be negative")
+        if obj.free_cloud_daily_limit < 0:
+            raise ValueError("AI_CORE_FREE_CLOUD_DAILY_LIMIT cannot be negative")
         if obj.host not in {"127.0.0.1", "::1", "localhost"} and not (obj.token or obj.project_tokens):
             raise ValueError("AI_CORE_TOKEN is required when binding a non-loopback address")
         if obj.token and len(obj.token) < 24:

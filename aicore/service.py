@@ -17,6 +17,7 @@ from .metadata import ReferenceCatalog
 from .registry import list_providers
 from .search import SearchRouter, list_search_providers
 from .settings import Settings
+from .free import free_catalog
 from .store import Store
 from .webfetch import fetch_page
 
@@ -38,7 +39,8 @@ class Service:
         self.reference = ReferenceCatalog(self.store, transport)
         self.chat = ChatGateway(self.store, transport,
                                 timeout=max(settings.timeout_seconds, 60),
-                                daily_limit=settings.llm_daily_limit)
+                                daily_limit=settings.llm_daily_limit,
+                                free_cloud_daily_limit=settings.free_cloud_daily_limit)
         self.fetcher = fetcher or fetch_page
 
     def serve(self):
@@ -156,6 +158,8 @@ class Service:
                         else:
                             data = {"providers": [{"id": p.id, "models_url": p.models_url,
                                 "discovery": "api" if p.models_url else "manual"} for p in list_providers()]}
+                    elif path == "/v1/free/models":
+                        data = free_catalog(service.chat.transport)
                     elif path == "/v1/usage":
                         data = {"search": [x for x in service.store.usage(tenant)
                                            if not x["provider"].startswith("llm:")],

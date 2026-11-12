@@ -13,7 +13,7 @@ def spec() -> dict:
             "content": {"oneOf": [{"type": "string"}, {"type": "array"}, {"type": "null"}]},
             "tool_calls": {"type": "array", "items": {"type": "object"}},
             "tool_call_id": {"type": "string"}}},
-        "ChatRequest": {"type": "object", "required": ["provider", "model", "messages"], "properties": {
+        "ChatRequest": {"type": "object", "required": ["messages"], "properties": {
             "provider": {"type": "string"}, "model": {"type": "string"},
             "messages": {"type": "array", "items": {"$ref": "#/components/schemas/ChatMessage"}},
             "max_tokens": {"type": "integer", "minimum": 1, "maximum": 8192},
@@ -79,6 +79,7 @@ def spec() -> dict:
         "/v1/tools/web_fetch": {"post": operation("Pinned-IP public HTTPS page extraction", body="FetchRequest")},
         "/v1/chat/completions": {"post": operation("Text chat, tool calls or normalized SSE", body="ChatRequest")},
         "/v1/usage": {"get": operation("Tenant-specific search and model usage")},
+        "/v1/free/models": {"get": operation("Local no-key and account-key free tier model discovery")},
         "/v1/connections/{provider}/test": {"post": operation("Explicit model discovery test",
             parameters=[path("provider")])},
     }

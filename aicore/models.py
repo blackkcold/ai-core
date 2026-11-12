@@ -72,6 +72,13 @@ class ModelCatalog:
         self.store, self.transport, self.timeout = store, transport or Transport(), timeout
 
     def list(self, provider_id: str, *, refresh: bool = False, tenant: str = "local") -> dict:
+        if provider_id == "auto":
+            from .free import local_status
+            statuses = local_status(self.transport, timeout=min(self.timeout, 4))
+            return {"provider": "auto", "source": "local_discovery",
+                    "models": [{**row, "provider": s["provider"]}
+                               for s in statuses for row in s["models"]],
+                    "note": "Only installed local models are listed; hosted free tiers need keys."}
         provider = get_provider(provider_id)
         key = os.getenv(provider.key_env, "").strip() if provider.key_env else ""
         if not provider.models_url:
