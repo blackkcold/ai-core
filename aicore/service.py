@@ -12,6 +12,7 @@ from .errors import CoreError, InvalidRequest
 from .generator import generate_setup
 from .llm import ChatGateway
 from .models import ModelCatalog
+from .openapi import spec as openapi_spec
 from .metadata import ReferenceCatalog
 from .registry import list_providers
 from .search import SearchRouter, list_search_providers
@@ -25,27 +26,6 @@ TENANT_RE = re.compile(r"^[a-zA-Z0-9_.-]{1,64}$")
 
 class _Unauthorized(Exception):
     pass
-
-
-def openapi_spec() -> dict:
-    methods = {
-        "/healthz": ["get"], "/v1/providers": ["get"],
-        "/v1/search/providers": ["get"], "/v1/models": ["get"],
-        "/v1/models/reference": ["get"], "/v1/usage": ["get"],
-        "/v1/providers/{provider}/setup": ["get"],
-        "/v1/tools/web_search": ["post"], "/v1/tools/web_fetch": ["post"],
-        "/v1/chat/completions": ["post"], "/v1/connections/{provider}/test": ["post"],
-    }
-    paths = {}
-    for path, verbs in methods.items():
-        paths[path] = {verb: {"operationId": verb + "_" + path.replace("/", "_")
-                              .replace("{", "").replace("}", ""),
-                              "responses": {"200": {"description": "Success"},
-                                            "400": {"description": "Validation error"}}}
-                       for verb in verbs}
-    return {"openapi": "3.1.0",
-            "info": {"title": "AI Core HTTP API", "version": "1.0.0"},
-            "servers": [{"url": "http://127.0.0.1:8765"}], "paths": paths}
 
 
 class Service:
