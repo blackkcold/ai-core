@@ -32,7 +32,7 @@ class FakeTransport:
 class SearchTests(unittest.TestCase):
     def setUp(self):
         self.store = Store()
-        self.cfg = replace(Settings(), search_daily_limits={
+        self.cfg = replace(Settings(), search_enabled=("tavily", "firecrawl"), search_daily_limits={
             "tavily": 2, "firecrawl": 3, "tinyfish": 2, "parallel": 2,
             "exa": 2, "brave": 2}, search_cache_seconds=3600)
 

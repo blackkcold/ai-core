@@ -6,6 +6,8 @@ keys or live requests. Upstream response bodies are never included in errors.
 from __future__ import annotations
 
 import json
+import gzip
+import io
 import socket
 import urllib.error
 import urllib.parse
@@ -36,7 +38,9 @@ class Transport:
         if parts.username or parts.password:
             raise InvalidRequest("upstream URL must not contain credentials")
         data = None
-        request_headers = {"Accept": "application/json", **(headers or {})}
+        request_headers = {"Accept": "application/json",
+                           "User-Agent": "ai-core/1.1 (+https://github.com/blackkcold/ai-core)",
+                           **(headers or {})}
         if body is not None:
             try:
                 data = json.dumps(body, ensure_ascii=False, allow_nan=False).encode("utf-8")
@@ -62,6 +66,14 @@ class Transport:
             payload = response.read(max_bytes + 1)
             if len(payload) > max_bytes:
                 raise InvalidRequest("upstream response exceeds configured size budget")
+            if response.headers.get("Content-Encoding", "").lower() == "gzip":
+                try:
+                    with gzip.GzipFile(fileobj=io.BytesIO(payload)) as stream:
+                        payload = stream.read(max_bytes + 1)
+                except (OSError, EOFError):
+                    raise ProviderUnavailable("invalid compressed upstream JSON") from None
+                if len(payload) > max_bytes:
+                    raise InvalidRequest("decompressed upstream JSON exceeds size budget")
             try:
                 result = json.loads(payload.decode("utf-8"))
             except (ValueError, UnicodeDecodeError):

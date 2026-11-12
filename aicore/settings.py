@@ -14,7 +14,11 @@ def truthy(value: str) -> bool:
 
 
 def _parse_budgets(raw: str, *, include_keyless_defaults: bool = True) -> dict[str, int]:
-    budgets = {"tavily": 100, "firecrawl": 40} if include_keyless_defaults else {}
+    budgets = {
+        "wikipedia": 60, "hackernews": 50, "openalex": 40,
+        "crossref": 40, "europepmc": 40, "stackoverflow": 30,
+        "openlibrary": 30,
+    } if include_keyless_defaults else {}
     if not raw.strip():
         return budgets
     for part in raw.split(","):
@@ -31,8 +35,11 @@ class Settings:
     port: int = 8765
     token: str = ""
     state_db: str = "./.ai-core-state.sqlite3"
-    search_enabled: tuple[str, ...] = ("tavily", "firecrawl")
-    search_daily_limits: dict[str, int] = field(default_factory=lambda: {"tavily": 100, "firecrawl": 40})
+    search_enabled: tuple[str, ...] = (
+        "wikipedia", "hackernews", "openalex", "crossref",
+        "europepmc", "stackoverflow", "openlibrary",
+    )
+    search_daily_limits: dict[str, int] = field(default_factory=lambda: _parse_budgets(""))
     search_monthly_limits: dict[str, int] = field(default_factory=dict)
     search_allow_metered: bool = False
     llm_daily_limit: int = 0
@@ -44,7 +51,7 @@ class Settings:
     @classmethod
     def from_env(cls) -> "Settings":
         defaults = cls()
-        enabled = tuple(p.strip() for p in os.getenv("AI_CORE_SEARCH_ENABLED", "tavily,firecrawl").split(",") if p.strip())
+        enabled = tuple(p.strip() for p in os.getenv("AI_CORE_SEARCH_ENABLED", "wikipedia,hackernews,openalex,crossref,europepmc,stackoverflow,openlibrary").split(",") if p.strip())
         monthly = _parse_budgets(os.getenv("AI_CORE_SEARCH_MONTHLY_LIMITS", ""), include_keyless_defaults=False)
         try:
             project_tokens = json.loads(os.getenv("AI_CORE_PROJECT_TOKENS", "{}"))

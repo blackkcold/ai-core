@@ -20,6 +20,7 @@ from .errors import BudgetExceeded, InvalidRequest, MissingCredential, ProviderU
 from .settings import Settings
 from .store import Store
 from .transport import Transport
+from .search_free import PUBLIC_SEARCH, search_public
 
 
 SEARCH_PROVIDERS = {
@@ -36,7 +37,18 @@ SEARCH_PROVIDERS = {
     "brave": {"endpoint": "https://api.search.brave.com/res/v1/web/search", "env": "BRAVE_API_KEY",
               "auth": "required", "docs": "https://api-dashboard.search.brave.com/app/documentation/web-search"},
 }
-DEFAULT_ORDER = ("tavily", "firecrawl", "tinyfish", "parallel", "exa", "brave")
+for _public_id, _source in PUBLIC_SEARCH.items():
+    SEARCH_PROVIDERS[_public_id] = {
+        "endpoint": _source["endpoint"], "env": "", "auth": "none",
+        "docs": _source["docs"], "categories": _source["categories"],
+        "supports_recency": _source["recency"], "keyless": True,
+    }
+
+DEFAULT_ORDER = (
+    "wikipedia", "hackernews", "openalex", "crossref", "europepmc",
+    "stackoverflow", "openlibrary", "tavily", "firecrawl",
+    "tinyfish", "parallel", "exa", "brave",
+)
 RECENCY_DAYS = {"24h": 1, "7d": 7, "30d": 30, "90d": 90, "1y": 365}
 _REGEX_TAG = re.compile(r"<[^>]*>")
 
@@ -89,6 +101,7 @@ class SearchQuery:
     provider: str | None = None
     mode: str = "free-first"
     max_attempts: int = 3
+    category: str = "general"
 
     @classmethod
     def parse(cls, data: dict):
@@ -116,7 +129,10 @@ class SearchQuery:
         mode = data.get("mode", "free-first")
         if mode not in {"free-first", "deep"}:
             raise InvalidRequest("mode must be free-first or deep")
-        return cls(query.strip(), limit, recency, language, provider, mode, attempts)
+        category = data.get("category", "general")
+        if category not in {"general", "research", "news", "developer", "books"}:
+            raise InvalidRequest("invalid search category")
+        return cls(query.strip(), limit, recency, language, provider, mode, attempts, category)
 
 
 def _get(obj, *keys):
@@ -155,6 +171,8 @@ def _hits(provider: str, rows: list) -> list[dict]:
 
 def _call(provider: str, q: SearchQuery, key: str, transport: Transport, timeout: int) -> list[dict]:
     endpoint = SEARCH_PROVIDERS[provider]["endpoint"]
+    if provider in PUBLIC_SEARCH:
+        return _hits(provider, search_public(provider, q, transport, timeout))
     if provider == "tavily":
         headers = {"Authorization": "Bearer " + key} if key else {"X-Tavily-Access-Mode": "keyless"}
         payload = {"query": q.query, "search_depth": "basic", "max_results": q.limit,
@@ -243,8 +261,11 @@ class SearchRouter:
             if q.provider not in enabled:
                 raise InvalidRequest("provider is disabled")
             enabled = [q.provider]
+        else:
+            enabled = [p for p in enabled if q.category in
+                       SEARCH_PROVIDERS[p].get("categories", ["general"])]
         key_data = {"tenant": tenant, "query": q.query, "limit": q.limit, "recency": q.recency,
-                    "lang": q.language, "providers": enabled, "mode": q.mode,
+                    "lang": q.language, "category": q.category, "providers": enabled, "mode": q.mode,
                     "metered": self.settings.search_allow_metered}
         cache_key = hashlib.sha256(json.dumps(key_data, sort_keys=True).encode()).hexdigest()
         cached = self.store.cache_get(cache_key)
@@ -255,7 +276,10 @@ class SearchRouter:
             if attempted >= q.max_attempts:
                 break
             spec = SEARCH_PROVIDERS[provider]
-            key = os.getenv(spec["env"], "").strip()
+            if q.recency and spec.get("supports_recency") is False:
+                failures.append({"provider": provider, "reason": "unsupported_recency"})
+                continue
+            key = os.getenv(spec["env"], "").strip() if spec["env"] else ""
             if not self.settings.search_allow_metered:
                 if spec["auth"] == "required":
                     failures.append({"provider": provider, "reason": "metered_disabled"})
