@@ -92,6 +92,7 @@ def _anthropic_messages(messages: list[dict]) -> tuple[str, list[dict]]:
 
 def _gemini_messages(messages: list[dict]) -> tuple[str, list[dict]]:
     system, contents = [], []
+    tool_names = {}
     for msg in messages:
         role = msg["role"]
         if role in {"system", "developer"}:
@@ -100,8 +101,11 @@ def _gemini_messages(messages: list[dict]) -> tuple[str, list[dict]]:
             system.append(msg["content"])
             continue
         if role == "tool":
+            name = msg.get("name") or tool_names.get(msg.get("tool_call_id"))
+            if not isinstance(name, str) or not name:
+                raise InvalidRequest("Gemini tool result needs name or preceding tool_call_id")
             contents.append({"role": "user", "parts": [{
-                "functionResponse": {"name": msg.get("name") or "tool",
+                "functionResponse": {"name": name,
                                      "response": {"result": msg.get("content") or ""}}}]})
             continue
         if not isinstance(msg.get("content"), (str, type(None))):
@@ -109,6 +113,8 @@ def _gemini_messages(messages: list[dict]) -> tuple[str, list[dict]]:
         parts = [{"text": msg["content"]}] if msg.get("content") else []
         for call in msg.get("tool_calls", []):
             func = call.get("function") or {}
+            if call.get("id") and func.get("name"):
+                tool_names[call["id"]] = func["name"]
             try:
                 args = json.loads(func.get("arguments", "{}"))
             except (TypeError, ValueError):
@@ -306,7 +312,8 @@ def _stream_objects(proto: str, response):
                 if delta.get("type") == "text_delta":
                     yield {"delta": {"content": delta.get("text") or ""}}
                 if delta.get("type") == "input_json_delta":
-                    yield {"delta": {"tool_arguments_fragment": delta.get("partial_json") or ""}}
+                    yield {"delta": {"tool_calls": [{"index": obj.get("index", 0),
+                        "function": {"arguments": delta.get("partial_json") or ""}}]}}
             elif kind == "content_block_start":
                 block = obj.get("content_block") or {}
                 if block.get("type") == "tool_use":
