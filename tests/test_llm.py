@@ -125,5 +125,36 @@ class ChatTests(unittest.TestCase):
         self.assertEqual(reply["choices"][0]["message"]["tool_calls"][0]["id"], "c1")
 
 
+
+    def test_global_budget_cannot_be_bypassed_by_switching_provider(self):
+        gateway = ChatGateway(self.store, self.transport, daily_limit=1)
+        with patch.dict(os.environ, {"DEEPSEEK_API_KEY": "fake", "ANTHROPIC_API_KEY": "fake"}):
+            gateway.chat(self.raw)
+            with self.assertRaises(BudgetExceeded):
+                gateway.chat({"provider": "anthropic", "model": "claude-test",
+                              "messages": [{"role": "user", "content": "hello"}]})
+
+    def test_anthropic_stream_tool_arguments_are_openai_style(self):
+        import io
+        stream = io.BytesIO(
+            b'event: content_block_start\n'
+            b'data: {"type":"content_block_start","index":0,"content_block":{"type":"tool_use","id":"t1","name":"web_search"}}\n\n'
+            b'event: content_block_delta\n'
+            b'data: {"type":"content_block_delta","index":0,"delta":{"type":"input_json_delta","partial_json":"{\\"query\\":\\"hi\\"}"}}\n\n'
+        )
+        chunks = list(_stream_objects("anthropic", stream))
+        self.assertEqual(chunks[0]["delta"]["tool_calls"][0]["id"], "t1")
+        self.assertEqual(chunks[1]["delta"]["tool_calls"][0]["function"]["arguments"], '{"query":"hi"}')
+
+    def test_gemini_tool_result_resolves_call_id(self):
+        from aicore.llm import _gemini_messages
+        system, contents = _gemini_messages([
+            {"role": "user", "content": "search"},
+            {"role": "assistant", "content": "", "tool_calls": [
+                {"id": "call1", "function": {"name": "web_search", "arguments": '{"query":"test"}'}}]},
+            {"role": "tool", "tool_call_id": "call1", "content": "results"},
+        ])
+        self.assertEqual(contents[-1]["parts"][0]["functionResponse"]["name"], "web_search")
+
 if __name__ == "__main__":
     unittest.main()

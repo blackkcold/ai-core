@@ -97,5 +97,24 @@ class HTTPTests(unittest.TestCase):
         self.assertIn('works', data)
 
 
+
+    def test_project_token_is_distinct_from_master(self):
+        self.service.settings = replace(
+            self.service.settings, token="", project_tokens={"research": "R" * 32})
+        conn = http.client.HTTPConnection("127.0.0.1", self.port, timeout=4)
+        conn.request("GET", "/v1/usage", headers={"Authorization": "Bearer " + "R" * 32})
+        response = conn.getresponse()
+        self.assertEqual(response.status, 200)
+        response.read()
+        conn.close()
+        denied, _ = self.call("GET", "/v1/usage")
+        self.assertEqual(denied, 401)
+
+    def test_openapi_has_json_schemas(self):
+        status, data = self.call("GET", "/openapi.json")
+        self.assertEqual(status, 200)
+        doc = json.loads(data)
+        self.assertIn("SearchRequest", doc["components"]["schemas"])
+
 if __name__ == "__main__":
     unittest.main()

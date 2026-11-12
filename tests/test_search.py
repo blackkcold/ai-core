@@ -105,6 +105,12 @@ class SearchTests(unittest.TestCase):
         self.assertEqual(sum(values), 4)
         self.assertEqual(sum(x["calls"] for x in self.store.usage()), 4)
 
+    def test_quota_snapshot(self):
+        self.store.reserve("tavily", "app", 5)
+        snapshot = self.store.quota_snapshot("tavily")
+        self.assertEqual(snapshot["used_today"], 1)
+        self.assertEqual(snapshot["used_this_month"], 0)
+
     def test_monthly_budget(self):
         self.store.reserve("monthly", "t", 100, 1)
         with self.assertRaises(BudgetExceeded):
