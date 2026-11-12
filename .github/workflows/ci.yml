@@ -55,6 +55,21 @@ jobs:
       - name: Typecheck native Swift client
         run: swiftc -typecheck clients/swift/AICoreClient.swift
 
+  kotlin:
+    name: Kotlin/JVM client compilation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.14.3'
+      - name: Compile Kotlin client
+        run: gradle -p clients/kotlin compileKotlin --no-daemon
+
   container:
     name: Container build and health smoke
     runs-on: ubuntu-latest
