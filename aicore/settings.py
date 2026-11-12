@@ -2,6 +2,9 @@
 from __future__ import annotations
 
 import os
+import json
+import re
+from urllib.parse import urlsplit
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -32,6 +35,9 @@ class Settings:
     search_daily_limits: dict[str, int] = field(default_factory=lambda: {"tavily": 100, "firecrawl": 40})
     search_monthly_limits: dict[str, int] = field(default_factory=dict)
     search_allow_metered: bool = False
+    llm_daily_limit: int = 0
+    project_tokens: dict[str, str] = field(default_factory=dict)
+    allowed_origins: tuple[str, ...] = ()
     search_cache_seconds: int = 3600
     timeout_seconds: int = 20
 
@@ -40,6 +46,28 @@ class Settings:
         defaults = cls()
         enabled = tuple(p.strip() for p in os.getenv("AI_CORE_SEARCH_ENABLED", "tavily,firecrawl").split(",") if p.strip())
         monthly = _parse_budgets(os.getenv("AI_CORE_SEARCH_MONTHLY_LIMITS", "")) if os.getenv("AI_CORE_SEARCH_MONTHLY_LIMITS") else {}
+        try:
+            project_tokens = json.loads(os.getenv("AI_CORE_PROJECT_TOKENS", "{}"))
+        except ValueError as exc:
+            raise ValueError("AI_CORE_PROJECT_TOKENS must be a JSON object") from exc
+        if not isinstance(project_tokens, dict):
+            raise ValueError("AI_CORE_PROJECT_TOKENS must be a JSON object")
+        for name, secret in project_tokens.items():
+            if not isinstance(name, str) or not re.fullmatch(r"[a-zA-Z0-9_.-]{1,64}", name):
+                raise ValueError("invalid project token name")
+            if not isinstance(secret, str) or len(secret) < 24:
+                raise ValueError("project tokens must contain at least 24 characters")
+        if len(set(project_tokens.values())) != len(project_tokens):
+            raise ValueError("project tokens must be unique")
+        origins = tuple(x.strip() for x in os.getenv("AI_CORE_ALLOWED_ORIGINS", "").split(",") if x.strip())
+        for origin in origins:
+            url = urlsplit(origin)
+            local = url.hostname in {"localhost", "127.0.0.1", "::1"}
+            if (url.scheme != "https" and not (local and url.scheme == "http")) or (
+                    not url.hostname or url.username or url.password or url.path not in {"", "/"} or
+                    url.query or url.fragment or origin.rstrip("/") !=
+                    (url.scheme + "://" + url.netloc)):
+                raise ValueError("invalid AI_CORE_ALLOWED_ORIGINS origin")
         obj = cls(
             host=os.getenv("AI_CORE_HOST", defaults.host),
             port=int(os.getenv("AI_CORE_PORT", defaults.port)),
@@ -49,6 +77,9 @@ class Settings:
             search_daily_limits=_parse_budgets(os.getenv("AI_CORE_SEARCH_DAILY_LIMITS", "")),
             search_monthly_limits=monthly,
             search_allow_metered=truthy(os.getenv("AI_CORE_ALLOW_METERED_SEARCH", "0")),
+            llm_daily_limit=int(os.getenv("AI_CORE_LLM_DAILY_LIMIT", "0")),
+            project_tokens=project_tokens,
+            allowed_origins=origins,
             search_cache_seconds=int(os.getenv("AI_CORE_SEARCH_CACHE_SECONDS", "3600")),
             timeout_seconds=int(os.getenv("AI_CORE_TIMEOUT_SECONDS", "20")),
         )
@@ -58,7 +89,9 @@ class Settings:
             raise ValueError("AI_CORE_TIMEOUT_SECONDS must be 1..120")
         if not 0 <= obj.search_cache_seconds <= 86400:
             raise ValueError("AI_CORE_SEARCH_CACHE_SECONDS must be 0..86400")
-        if obj.host not in {"127.0.0.1", "::1", "localhost"} and not obj.token:
+        if obj.llm_daily_limit < 0:
+            raise ValueError("AI_CORE_LLM_DAILY_LIMIT cannot be negative")
+        if obj.host not in {"127.0.0.1", "::1", "localhost"} and not (obj.token or obj.project_tokens):
             raise ValueError("AI_CORE_TOKEN is required when binding a non-loopback address")
         if obj.token and len(obj.token) < 24:
             raise ValueError("AI_CORE_TOKEN must be at least 24 characters")
