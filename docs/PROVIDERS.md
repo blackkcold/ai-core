@@ -43,3 +43,7 @@ Quota limits in AI Core are locally configured dispatch controls, not published 
 - Update regression fixtures; preserve backwards compatibility within major versions.
 - Review the pricing URL, never fabricate tokens/USD from incomplete usage.
 - Increment release notes and verify Python 3.11/3.12/3.13 CI.
+
+## Community metadata (optional)
+
+An explicit request to /v1/models/reference?provider=... downloads the Models.dev provider catalog (https://models.dev/api.json?type=all) with a 24-hour local cache and bounded response size. Its context sizes, tool flags and indicative USD-per-million-token prices are **community reference data only**, not vendor-confirmed billing rates or proof that the configured account can invoke a model. AI Core never uses this dataset for charging a user.

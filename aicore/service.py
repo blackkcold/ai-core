@@ -12,6 +12,7 @@ from .errors import CoreError, InvalidRequest
 from .generator import generate_setup
 from .llm import ChatGateway
 from .models import ModelCatalog
+from .metadata import ReferenceCatalog
 from .registry import list_providers
 from .search import SearchRouter, list_search_providers
 from .settings import Settings
@@ -29,7 +30,8 @@ class _Unauthorized(Exception):
 def openapi_spec() -> dict:
     methods = {
         "/healthz": ["get"], "/v1/providers": ["get"],
-        "/v1/search/providers": ["get"], "/v1/models": ["get"], "/v1/usage": ["get"],
+        "/v1/search/providers": ["get"], "/v1/models": ["get"],
+        "/v1/models/reference": ["get"], "/v1/usage": ["get"],
         "/v1/providers/{provider}/setup": ["get"],
         "/v1/tools/web_search": ["post"], "/v1/tools/web_fetch": ["post"],
         "/v1/chat/completions": ["post"], "/v1/connections/{provider}/test": ["post"],
@@ -53,6 +55,7 @@ class Service:
         self.store = store or Store(str(settings.resolved_db))
         self.search = SearchRouter(settings, self.store, transport)
         self.models = ModelCatalog(self.store, transport, timeout=settings.timeout_seconds)
+        self.reference = ReferenceCatalog(self.store, transport)
         self.chat = ChatGateway(self.store, transport,
                                 timeout=max(settings.timeout_seconds, 60),
                                 daily_limit=settings.llm_daily_limit)
@@ -161,6 +164,9 @@ class Service:
                             "metered_allowed": service.settings.search_allow_metered,
                             "local_daily_limit": service.settings.search_daily_limits.get(spec["id"])}
                             for spec in list_search_providers()]}
+                    elif path == "/v1/models/reference":
+                        provider = (params.get("provider") or [""])[0]
+                        data = service.reference.list(provider, refresh=(params.get("refresh") == ["1"]))
                     elif path == "/v1/models":
                         provider = (params.get("provider") or [None])[0]
                         if provider:

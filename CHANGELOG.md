@@ -2,6 +2,7 @@
 
 ## 1.0.0 — 2026-11-12
 
+- Optional, clearly labeled Models.dev community pricing/capability reference catalog.
 - Versioned 13-provider catalog, vendor-native model discovery and manual-listing boundaries.
 - OpenAI-compatible, Anthropic, Gemini and Ollama text/tool-call adapter paths with normalized streaming.
 - Tavily, Firecrawl, TinyFish, Exa, Parallel and Brave search contracts with keyless-first protection.

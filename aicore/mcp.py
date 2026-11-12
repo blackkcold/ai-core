@@ -30,6 +30,8 @@ TOOLS = [
     {"name": "list_models", "description": "Discover available model IDs from a provider API, when supported.",
      "inputSchema": {"type": "object", "properties": {
          "provider": {"type": "string"}, "refresh": {"type": "boolean"}}, "required": ["provider"]}},
+    {"name": "list_model_reference", "description": "Opt-in Models.dev community reference metadata; never an account or billing guarantee.",
+     "inputSchema": {"type": "object", "properties": {"provider": {"type": "string"}, "refresh": {"type": "boolean"}}, "required": ["provider"]}},
     {"name": "chat", "description": "Call a configured model; tool calls in replies are inert data.",
      "inputSchema": {"type": "object", "properties": {
          "provider": {"type": "string"}, "model": {"type": "string"},
@@ -61,6 +63,8 @@ class MCPServer:
         if name == "list_models":
             return self.service.models.list(arguments["provider"], tenant="mcp",
                                             refresh=arguments.get("refresh") is True)
+        if name == "list_model_reference":
+            return self.service.reference.list(arguments["provider"], refresh=arguments.get("refresh") is True)
         if name == "chat":
             return self.service.chat.chat({**arguments, "stream": False}, tenant="mcp")
         if name == "generate_setup":

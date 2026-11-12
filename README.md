@@ -108,6 +108,7 @@ Environment credentials are inherited from the launching process. Adjust the dec
 | /healthz | GET | Minimal unauthenticated health |
 | /v1/providers | GET | 13 provider profiles, endpoints and auth modes |
 | /v1/models?provider=deepseek | GET | Live model discovery, cache or explicit manual state |
+| /v1/models/reference?provider=deepseek | GET | Opt-in Models.dev reference prices and capabilities |
 | /v1/search/providers | GET | Six search service configurations and local guards |
 | /v1/providers/deepseek/setup?language=python | GET | Safe, credential-free code sample |
 | /v1/tools/web_search | POST | Rate-guarded normalized web search |
@@ -116,6 +117,8 @@ Environment credentials are inherited from the launching process. Adjust the dec
 | /v1/connections/deepseek/test | POST | Explicit model-discovery connectivity check |
 | /v1/usage | GET | Per-project search/model usage |
 | /openapi.json | GET | OpenAPI route specification |
+
+For **explicit, non-authoritative** community model capability and indicative pricing metadata, use /v1/models/reference?provider=deepseek or ai-core model-reference --provider deepseek. AI Core never treats Models.dev prices as a billing authority or as proof of account entitlement.
 
 The Python package also exposes an AICoreClient in aicore.client. Other clients live in clients/typescript, clients/swift and clients/kotlin.
 

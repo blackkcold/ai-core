@@ -4,6 +4,7 @@ First release of the reusable AI Core repository. Implements a model-provider re
 
 ## What is shipped
 
+- Explicit optional Models.dev reference models, indicative prices and capabilities; never authoritative billing data.
 - Provider registry with versioned docs, regions, endpoints, authentication modes, supported-protocol boundaries.
 - Live model discovery from official provider listing endpoints. Manual configuration is explicit where no verified listing route exists.
 - Multi-provider chat with tool-call transport, normalized response usage and SSE stream path. AI Core does not execute tool calls.

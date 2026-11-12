@@ -23,6 +23,9 @@ def parser():
     models = sub.add_parser("models", help="Discover live provider models")
     models.add_argument("--provider", required=True)
     models.add_argument("--refresh", action="store_true")
+    reference = sub.add_parser("model-reference", help="Opt-in Models.dev reference prices and capabilities")
+    reference.add_argument("--provider", required=True)
+    reference.add_argument("--refresh", action="store_true")
     search = sub.add_parser("search", help="Run an explicitly budgeted web search")
     search.add_argument("query")
     search.add_argument("--provider")
@@ -66,6 +69,8 @@ def main(argv=None):
             try:
                 if args.command == "models":
                     value = service.models.list(args.provider, refresh=args.refresh)
+                elif args.command == "model-reference":
+                    value = service.reference.list(args.provider, refresh=args.refresh)
                 elif args.command == "search":
                     value = service.search.search({"query": args.query, "limit": args.limit,
                         "recency": args.recency, "provider": args.provider, "mode": args.mode})
