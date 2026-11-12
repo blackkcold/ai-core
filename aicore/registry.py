@@ -69,7 +69,7 @@ def _registry() -> dict[str, Provider]:
         raise RegistryError("unsupported registry schema version")
     result: dict[str, Provider] = {}
     for entry in raw["providers"]:
-        local = entry["id"] == "ollama-local"
+        local = entry["id"] in {"ollama-local", "lm-studio-local"}
         urls = [entry["base_url"], *(entry.get("regional_base_urls") or {}).values()]
         if entry.get("models_url"):
             urls.append(entry["models_url"])
