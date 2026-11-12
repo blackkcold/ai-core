@@ -53,9 +53,11 @@ class PublicSearchTests(unittest.TestCase):
         self.store.close()
 
     def test_seven_public_source_response_contracts(self):
-        self.assertEqual(len(PUBLIC_SEARCH), 7)
+        self.assertEqual(len(PUBLIC_SEARCH), 8)
         for name, info in PUBLIC_SEARCH.items():
             with self.subTest(provider=name):
+                if name == "you-free-mcp":  # covered by separate MCP transport fixture
+                    continue
                 q = SearchQuery(query="test", provider=name)
                 rows = search_public(name, q, self.transport, 20)
                 self.assertTrue(rows)
@@ -64,7 +66,7 @@ class PublicSearchTests(unittest.TestCase):
                 self.assertTrue(info["docs"].startswith("https://"))
 
     def test_default_general_search_needs_no_key(self):
-        settings = Settings()
+        settings = replace(Settings(), search_enabled=("wikipedia",))
         result = SearchRouter(settings, self.store, self.transport).search({"query": "Python"})
         self.assertEqual(result["providers"], ["wikipedia"])
         self.assertEqual(result["hits"][0]["url"], "https://en.wikipedia.org/?curid=12345")

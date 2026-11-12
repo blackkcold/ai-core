@@ -48,7 +48,7 @@ for _public_id, _source in PUBLIC_SEARCH.items():
 SEARCH_PROVIDERS.update(EXTRA_SEARCH)
 
 DEFAULT_ORDER = (
-    "wikipedia", "hackernews", "openalex", "crossref", "europepmc",
+    "you-free-mcp", "wikipedia", "hackernews", "openalex", "crossref", "europepmc",
     "stackoverflow", "openlibrary", "tavily", "firecrawl",
     "tinyfish", "parallel", "exa", "brave",
     "perplexity", "you", "jina", "newsapi", "searxng",

@@ -15,7 +15,7 @@ def truthy(value: str) -> bool:
 
 def _parse_budgets(raw: str, *, include_keyless_defaults: bool = True) -> dict[str, int]:
     budgets = {
-        "wikipedia": 60, "hackernews": 50, "openalex": 40,
+        "you-free-mcp": 60, "wikipedia": 60, "hackernews": 50, "openalex": 40,
         "crossref": 40, "europepmc": 40, "stackoverflow": 30,
         "openlibrary": 30,
     } if include_keyless_defaults else {}
@@ -36,7 +36,7 @@ class Settings:
     token: str = ""
     state_db: str = "./.ai-core-state.sqlite3"
     search_enabled: tuple[str, ...] = (
-        "wikipedia", "hackernews", "openalex", "crossref",
+        "you-free-mcp", "wikipedia", "hackernews", "openalex", "crossref",
         "europepmc", "stackoverflow", "openlibrary",
     )
     search_daily_limits: dict[str, int] = field(default_factory=lambda: _parse_budgets(""))
@@ -52,7 +52,7 @@ class Settings:
     @classmethod
     def from_env(cls) -> "Settings":
         defaults = cls()
-        enabled = tuple(p.strip() for p in os.getenv("AI_CORE_SEARCH_ENABLED", "wikipedia,hackernews,openalex,crossref,europepmc,stackoverflow,openlibrary").split(",") if p.strip())
+        enabled = tuple(p.strip() for p in os.getenv("AI_CORE_SEARCH_ENABLED", "you-free-mcp,wikipedia,hackernews,openalex,crossref,europepmc,stackoverflow,openlibrary").split(",") if p.strip())
         monthly = _parse_budgets(os.getenv("AI_CORE_SEARCH_MONTHLY_LIMITS", ""), include_keyless_defaults=False)
         try:
             project_tokens = json.loads(os.getenv("AI_CORE_PROJECT_TOKENS", "{}"))

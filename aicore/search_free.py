@@ -7,12 +7,21 @@ Remote metadata may be inaccurate; citations should still be verified.
 from __future__ import annotations
 
 from datetime import datetime, timezone, timedelta
+import json
+from .errors import ProviderUnavailable
 from urllib.parse import urlencode
 
 from .errors import InvalidRequest
 
 
 PUBLIC_SEARCH = {
+    "you-free-mcp": {
+        "endpoint": "https://api.you.com/mcp?profile=free",
+        "docs": "https://you.com/docs/agents/mcp-server",
+        "categories": ["general", "news"],
+        "recency": True,
+        "note": "No API key; official hosted free MCP evaluation route (100/day vendor policy).",
+    },
     "wikipedia": {
         "endpoint": "https://en.wikipedia.org/w/api.php",
         "docs": "https://www.mediawiki.org/wiki/API:Search",
@@ -94,6 +103,90 @@ def _request(transport, endpoint: str, params: dict, timeout: int) -> dict:
                                   timeout=timeout)
 
 
+def _you_free_mcp(q, transport, timeout: int):
+    """Call the official keyless You.com MCP profile using stateless 2026-07-28 JSON-RPC.
+
+    Do not use the keyed You.com REST API for this free route. JSON or SSE
+    responses are supported; match only the response with our request id.
+    """
+    if q.recency == "90d":
+        raise InvalidRequest("free You.com MCP cannot guarantee an exact 90-day filter")
+    request_id = 1
+    params = {"query": q.query, "count": q.limit}
+    freshness = {"24h": "day", "7d": "week", "30d": "month", "1y": "year"}.get(q.recency)
+    if freshness:
+        params["freshness"] = freshness
+    meta = {
+        "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+        "io.modelcontextprotocol/clientCapabilities": {},
+        "io.modelcontextprotocol/clientInfo": {"name": "ai-core", "version": "1.1.0"},
+    }
+    if q.language:
+        meta["com.you.com/search"] = {"language": q.language.split("-")[0].upper()}
+    body = {"jsonrpc": "2.0", "id": request_id, "method": "tools/call",
+            "params": {"name": "you-search", "arguments": params, "_meta": meta}}
+    with transport.open(
+        "POST", PUBLIC_SEARCH["you-free-mcp"]["endpoint"], body=body,
+        headers={"Accept": "application/json, text/event-stream",
+                 "MCP-Protocol-Version": "2026-07-28",
+                 "Mcp-Method": "tools/call", "Mcp-Name": "you-search"},
+        timeout=timeout
+    ) as response:
+        payload = response.read(2_000_001)
+        if len(payload) > 2_000_000:
+            raise ProviderUnavailable("free MCP response is too large")
+        content_type = response.headers.get("Content-Type", "application/json").lower()
+    try:
+        text = payload.decode("utf-8")
+        if "text/event-stream" in content_type:
+            response_obj, event_lines = None, []
+            for line in text.splitlines() + [""]:
+                if line.startswith("data:"):
+                    event_lines.append(line[5:].strip())
+                elif not line.strip() and event_lines:
+                    candidate = json.loads("\n".join(event_lines))
+                    if isinstance(candidate, dict) and candidate.get("id") == request_id:
+                        response_obj = candidate
+                    event_lines = []
+            if response_obj is None:
+                raise ProviderUnavailable("free MCP did not return our request result")
+        else:
+            response_obj = json.loads(text)
+    except (ValueError, UnicodeDecodeError):
+        raise ProviderUnavailable("invalid free MCP response") from None
+    if not isinstance(response_obj, dict) or response_obj.get("id") != request_id:
+        raise ProviderUnavailable("invalid free MCP RPC ID")
+    if response_obj.get("error"):
+        raise ProviderUnavailable("free MCP upstream RPC error")
+    result = response_obj.get("result")
+    if not isinstance(result, dict) or result.get("isError"):
+        raise ProviderUnavailable("free MCP search tool returned an error")
+    structured = result.get("structuredContent")
+    if not isinstance(structured, dict):
+        text_blocks = result.get("content") or []
+        first_text = next((b.get("text") for b in text_blocks
+                           if isinstance(b, dict) and b.get("type") == "text"), None)
+        try:
+            structured = json.loads(first_text) if first_text else {}
+        except ValueError:
+            structured = {}
+    web = (structured.get("results") or {}).get("web") or []
+    if not isinstance(web, list):
+        raise ProviderUnavailable("invalid free MCP search results")
+    hits = []
+    for item in web[:q.limit]:
+        if not isinstance(item, dict):
+            continue
+        highlights = (item.get("contents") or {}).get("highlights") or []
+        snippet = " ".join(x for x in highlights if isinstance(x, str))
+        if not snippet:
+            snippet = " ".join(x for x in item.get("snippets", []) if isinstance(x, str))
+        hits.append({"url": item.get("url"), "title": item.get("title"),
+                     "snippet": snippet or item.get("description") or "",
+                     "published_date": item.get("page_age")})
+    return hits
+
+
 def search_public(provider, q, transport, timeout: int) -> list[dict]:
     """Convert each provider's JSON contract to common raw search rows.
 
@@ -101,6 +194,8 @@ def search_public(provider, q, transport, timeout: int) -> list[dict]:
     """
     if provider not in PUBLIC_SEARCH:
         raise InvalidRequest("unknown public search source")
+    if provider == "you-free-mcp":
+        return _you_free_mcp(q, transport, timeout)
     if q.recency and not PUBLIC_SEARCH[provider]["recency"]:
         raise InvalidRequest("this source cannot verify publication recency")
     days = {"24h": 1, "7d": 7, "30d": 30, "90d": 90, "1y": 365}.get(q.recency)
