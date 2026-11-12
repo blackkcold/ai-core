@@ -1,0 +1,13 @@
+.git
+.github
+tests
+clients
+docs
+__pycache__
+*.pyc
+.env
+.env.*
+*.sqlite3
+*.db
+dist
+build

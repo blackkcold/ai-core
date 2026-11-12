@@ -1,0 +1,27 @@
+services:
+  ai-core:
+    build: .
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    ports:
+      - "127.0.0.1:8765:8765"
+    environment:
+      AI_CORE_HOST: 0.0.0.0
+      AI_CORE_PORT: 8765
+      AI_CORE_STATE_DB: /data/state.sqlite3
+      AI_CORE_TOKEN: $AI_CORE_TOKEN
+      AI_CORE_PROJECT_TOKENS: $AI_CORE_PROJECT_TOKENS
+      AI_CORE_LLM_DAILY_LIMIT: $AI_CORE_LLM_DAILY_LIMIT
+      AI_CORE_SEARCH_ENABLED: $AI_CORE_SEARCH_ENABLED
+      AI_CORE_ALLOW_METERED_SEARCH: $AI_CORE_ALLOW_METERED_SEARCH
+      AI_CORE_SEARCH_DAILY_LIMITS: $AI_CORE_SEARCH_DAILY_LIMITS
+      DEEPSEEK_API_KEY: $DEEPSEEK_API_KEY
+      TAVILY_API_KEY: $TAVILY_API_KEY
+      FIRECRAWL_API_KEY: $FIRECRAWL_API_KEY
+    volumes:
+      - aicore-state:/data
+
+volumes:
+  aicore-state:
