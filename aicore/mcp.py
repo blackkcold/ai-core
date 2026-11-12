@@ -14,6 +14,7 @@ from .registry import list_providers
 from .search import list_search_providers
 from .service import Service
 from .settings import Settings
+from .free import free_catalog
 
 
 TOOLS = [
@@ -34,11 +35,13 @@ TOOLS = [
          "provider": {"type": "string"}, "refresh": {"type": "boolean"}}, "required": ["provider"]}},
     {"name": "list_model_reference", "description": "Opt-in Models.dev community reference metadata; never an account or billing guarantee.",
      "inputSchema": {"type": "object", "properties": {"provider": {"type": "string"}, "refresh": {"type": "boolean"}}, "required": ["provider"]}},
+    {"name": "free_models", "description": "List ready local no-key models and optional keyed free-tier models.",
+     "inputSchema": {"type": "object", "properties": {}}},
     {"name": "chat", "description": "Call a configured model; tool calls in replies are inert data.",
      "inputSchema": {"type": "object", "properties": {
          "provider": {"type": "string"}, "model": {"type": "string"},
          "messages": {"type": "array"}, "max_tokens": {"type": "integer"},
-         "tools": {"type": "array"}}, "required": ["provider", "model", "messages"]}},
+         "tools": {"type": "array"}}, "required": ["messages"]}},
     {"name": "generate_setup", "description": "Generate connection code for Python, TypeScript, Swift or curl.",
      "inputSchema": {"type": "object", "properties": {
          "provider": {"type": "string"}, "language": {"type": "string"},
@@ -67,6 +70,8 @@ class MCPServer:
                                             refresh=arguments.get("refresh") is True)
         if name == "list_model_reference":
             return self.service.reference.list(arguments["provider"], refresh=arguments.get("refresh") is True)
+        if name == "free_models":
+            return free_catalog(self.service.chat.transport)
         if name == "chat":
             return self.service.chat.chat({**arguments, "stream": False}, tenant="mcp")
         if name == "generate_setup":
@@ -84,12 +89,34 @@ class MCPServer:
         ident = request.get("id")
         if "id" not in request:
             return None  # notifications, including notifications/initialized
+        params = request.get("params") or {}
+        meta = params.get("_meta") or {} if isinstance(params, dict) else {}
+        protocol = meta.get("io.modelcontextprotocol/protocolVersion") if isinstance(meta, dict) else None
+        modern = protocol is not None or method == "server/discover"
+        if protocol is not None and protocol != "2026-07-28":
+            return {"jsonrpc": "2.0", "id": ident, "error": {
+                "code": -32022, "message": "unsupported protocol version",
+                "data": {"requested": protocol, "supported": ["2026-07-28"]}}}
+        if protocol == "2026-07-28" and not isinstance(
+                meta.get("io.modelcontextprotocol/clientCapabilities"), dict):
+            return {"jsonrpc": "2.0", "id": ident, "error": {
+                "code": -32602, "message": "missing client capabilities"}}
         try:
             if method == "initialize":
                 params = request.get("params") or {}
                 version = params.get("protocolVersion", "2025-03-26")
                 result = {"protocolVersion": version, "capabilities": {"tools": {}},
                           "serverInfo": {"name": "ai-core", "version": "1.0.0"}}
+            elif method == "server/discover":
+                result = {
+                    "resultType": "complete",
+                    "supportedVersions": ["2026-07-28"],
+                    "capabilities": {"tools": {}},
+                    "ttlMs": 300000,
+                    "cacheScope": "public",
+                    "_meta": {"io.modelcontextprotocol/serverInfo": {
+                        "name": "ai-core", "version": "1.0.0"}},
+                }
             elif method == "ping":
                 result = {}
             elif method == "tools/list":
@@ -102,6 +129,10 @@ class MCPServer:
             else:
                 return {"jsonrpc": "2.0", "id": ident,
                         "error": {"code": -32601, "message": "unknown JSON-RPC method"}}
+            if modern and method != "server/discover":
+                result["resultType"] = "complete"
+                result["_meta"] = {"io.modelcontextprotocol/serverInfo": {
+                    "name": "ai-core", "version": "1.0.0"}}
             return {"jsonrpc": "2.0", "id": ident, "result": result}
         except (CoreError, KeyError, TypeError, ValueError) as exc:
             message = str(exc) if isinstance(exc, CoreError) else "invalid parameters"

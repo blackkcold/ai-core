@@ -27,6 +27,30 @@ class MCPTests(unittest.TestCase):
         self.assertEqual(len(names), len(set(names)))
         self.assertTrue({"web_search", "web_fetch", "list_models", "chat", "generate_setup"} <= set(names))
 
+    def test_modern_discovery_and_tools(self):
+        meta = {"io.modelcontextprotocol/protocolVersion": "2026-07-28",
+                "io.modelcontextprotocol/clientCapabilities": {},
+                "io.modelcontextprotocol/clientInfo": {"name": "test", "version": "1.0"}}
+        req = lambda method, params: self.mcp.handle({
+            "jsonrpc": "2.0", "id": "modern", "method": method,
+            "params": {"_meta": meta, **params}})
+        discovery = req("server/discover", {})["result"]
+        self.assertIn("2026-07-28", discovery["supportedVersions"])
+        self.assertEqual(discovery["resultType"], "complete")
+        tools = req("tools/list", {})["result"]
+        self.assertEqual(tools["resultType"], "complete")
+        self.assertIn("free_models", [x["name"] for x in tools["tools"]])
+        search = req("tools/call", {"name": "web_fetch",
+            "arguments": {"url": "https://example.org/"}})["result"]
+        self.assertEqual(search["resultType"], "complete")
+
+    def test_modern_version_guard(self):
+        req = {"jsonrpc": "2.0", "id": 12, "method": "tools/list",
+               "params": {"_meta": {"io.modelcontextprotocol/protocolVersion": "2099-01-01",
+                                    "io.modelcontextprotocol/clientCapabilities": {}}}}
+        error = self.mcp.handle(req)["error"]
+        self.assertEqual(error["code"], -32022)
+
     def test_notification_no_reply(self):
         self.assertIsNone(self.mcp.handle({"jsonrpc": "2.0", "method": "notifications/initialized"}))
 
