@@ -134,6 +134,22 @@ class ChatTests(unittest.TestCase):
                 gateway.chat({"provider": "anthropic", "model": "claude-test",
                               "messages": [{"role": "user", "content": "hello"}]})
 
+    def test_streaming_and_nonstreaming_share_global_budget(self):
+        gateway = ChatGateway(self.store, self.transport, daily_limit=1)
+        with patch.dict(os.environ, {"DEEPSEEK_API_KEY": "fake"}):
+            list(gateway.stream({**self.raw, "stream": True}))
+            with self.assertRaises(BudgetExceeded):
+                gateway.chat(self.raw)
+
+    def test_streaming_across_providers_shares_global_budget(self):
+        gateway = ChatGateway(self.store, self.transport, daily_limit=1)
+        with patch.dict(os.environ, {"DEEPSEEK_API_KEY": "fake", "ANTHROPIC_API_KEY": "fake"}):
+            list(gateway.stream({**self.raw, "stream": True}))
+            with self.assertRaises(BudgetExceeded):
+                list(gateway.stream({
+                    "provider": "anthropic", "model": "claude-test",
+                    "messages": [{"role": "user", "content": "hello"}], "stream": True}))
+
     def test_anthropic_stream_tool_arguments_are_openai_style(self):
         import io
         stream = io.BytesIO(

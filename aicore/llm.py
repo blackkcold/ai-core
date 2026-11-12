@@ -381,7 +381,7 @@ class ChatGateway:
         reply_id = "chatcmpl-" + uuid.uuid4().hex
         counts = {"prompt_tokens": None, "completion_tokens": None}
         def generate():
-            ticket = self.store.reserve("llm:" + provider, tenant, self.daily_limit)
+            ticket = self.store.reserve("llm:global", tenant, self.daily_limit)
             status = "failed"
             try:
                 with self.transport.open("POST", url, headers=headers, body=body, timeout=self.timeout) as response:
