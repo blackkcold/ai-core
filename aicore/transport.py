@@ -15,6 +15,7 @@ import urllib.request
 from typing import Any
 
 from .errors import InvalidRequest, ProviderUnavailable, UpstreamError
+from . import __version__
 
 MAX_RESPONSE_BYTES = 2_000_000
 
@@ -39,7 +40,7 @@ class Transport:
             raise InvalidRequest("upstream URL must not contain credentials")
         data = None
         request_headers = {"Accept": "application/json",
-                           "User-Agent": "ai-core/1.1 (+https://github.com/blackkcold/ai-core)",
+                           "User-Agent": "ai-core/" + __version__ + " (+https://github.com/blackkcold/ai-core)",
                            **(headers or {})}
         if body is not None:
             try:

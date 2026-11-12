@@ -17,6 +17,7 @@ from html.parser import HTMLParser
 from urllib.parse import urlsplit
 
 from .errors import InvalidRequest, ProviderUnavailable, UnsafeURL
+from . import __version__
 
 MAX_PAGE_BYTES = 1_000_000
 MAX_TEXT_CHARS = 30_000
@@ -99,7 +100,7 @@ def fetch_page(url: str, *, timeout: int = 15, resolver=None, connection_factory
     conn = (connection_factory or _PinnedConnection)(host, ip, timeout)
     try:
         conn.request("GET", path, headers={
-            "Host": host, "User-Agent": "ai-core/1.0 (+https://github.com/blackkcold/ai-core)",
+            "Host": host, "User-Agent": "ai-core/" + __version__ + " (+https://github.com/blackkcold/ai-core)",
             "Accept": "text/html,text/plain,text/markdown,application/json",
             "Accept-Encoding": "identity", "Connection": "close",
         })

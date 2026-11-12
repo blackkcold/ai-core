@@ -14,6 +14,7 @@ from .registry import list_providers
 from .search import list_search_providers
 from .service import Service
 from .settings import Settings
+from . import __version__
 from .free import free_catalog
 
 
@@ -106,7 +107,7 @@ class MCPServer:
                 params = request.get("params") or {}
                 version = params.get("protocolVersion", "2025-03-26")
                 result = {"protocolVersion": version, "capabilities": {"tools": {}},
-                          "serverInfo": {"name": "ai-core", "version": "1.0.0"}}
+                          "serverInfo": {"name": "ai-core", "version": __version__}}
             elif method == "server/discover":
                 result = {
                     "resultType": "complete",
@@ -115,7 +116,7 @@ class MCPServer:
                     "ttlMs": 300000,
                     "cacheScope": "public",
                     "_meta": {"io.modelcontextprotocol/serverInfo": {
-                        "name": "ai-core", "version": "1.0.0"}},
+                        "name": "ai-core", "version": __version__}},
                 }
             elif method == "ping":
                 result = {}
@@ -132,7 +133,7 @@ class MCPServer:
             if modern and method != "server/discover":
                 result["resultType"] = "complete"
                 result["_meta"] = {"io.modelcontextprotocol/serverInfo": {
-                    "name": "ai-core", "version": "1.0.0"}}
+                    "name": "ai-core", "version": __version__}}
             return {"jsonrpc": "2.0", "id": ident, "result": result}
         except (CoreError, KeyError, TypeError, ValueError) as exc:
             message = str(exc) if isinstance(exc, CoreError) else "invalid parameters"

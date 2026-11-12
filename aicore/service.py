@@ -17,6 +17,7 @@ from .metadata import ReferenceCatalog
 from .registry import list_providers
 from .search import SearchRouter, list_search_providers
 from .settings import Settings
+from . import __version__
 from .free import free_catalog
 from .store import Store
 from .webfetch import fetch_page
@@ -47,7 +48,7 @@ class Service:
         service = self
 
         class Handler(BaseHTTPRequestHandler):
-            server_version = "AICore/1.0.0"
+            server_version = "AICore/" + __version__
 
             def log_message(self, fmt, *args):
                 return  # never log keys, URLs, request bodies or user queries
@@ -129,11 +130,11 @@ class Service:
                 try:
                     path, params = self._params()
                     if path == "/healthz":
-                        self._json(200, {"ok": True, "version": "1.0.0"})
+                        self._json(200, {"ok": True, "version": __version__})
                         return
                     tenant = self._tenant()
                     if path == "/":
-                        data = {"name": "AI Core", "version": "1.0.0",
+                        data = {"name": "AI Core", "version": __version__,
                                 "docs": "/openapi.json"}
                     elif path == "/openapi.json":
                         data = openapi_spec()

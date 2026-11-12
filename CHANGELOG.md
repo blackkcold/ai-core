@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.1.0 — 2026-11-12
+
+- Extended LLM Provider registry to 22 and search sources to 19, including official keyless You.com hosted MCP and public specialist data sources.
+- Added no-key local-model auto-discovery/selection, explicit guarded OpenRouter free model fallback and optional Docker Ollama bootstrap.
+- Fixed shared streaming/nonstreaming LLM paid quota; expanded protocol and provider fixtures.
+- Added MCP 2026-07-28 discovery with legacy compatibility, SDK parity and Kotlin compilation CI.
+- Added concise English/Chinese READMEs, deployment, compatibility and maintenance instructions, version-aware release pipeline.
+
+
 ## 1.0.0 — 2026-11-12
 
 - Optional, clearly labeled Models.dev community pricing/capability reference catalog.

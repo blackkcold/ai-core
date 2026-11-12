@@ -5,6 +5,8 @@ X-AI-Core-Project identifying sub-usage only for the master token.
 """
 from __future__ import annotations
 
+from . import __version__
+
 
 def spec() -> dict:
     schemas = {
@@ -87,7 +89,7 @@ def spec() -> dict:
     }
     return {
         "openapi": "3.1.0",
-        "info": {"title": "AI Core API", "version": "1.0.0",
+        "info": {"title": "AI Core API", "version": __version__,
                  "description": "Opt-in, budgeted AI and search gateway. Model references and local counts do not establish billing."},
         "servers": [{"url": "http://127.0.0.1:8765"}],
         "security": [{"bearerAuth": []}, {"projectToken": []}],

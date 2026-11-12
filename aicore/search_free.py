@@ -9,6 +9,7 @@ from __future__ import annotations
 from datetime import datetime, timezone, timedelta
 import json
 from .errors import ProviderUnavailable
+from . import __version__
 from urllib.parse import urlencode
 
 from .errors import InvalidRequest
@@ -119,7 +120,7 @@ def _you_free_mcp(q, transport, timeout: int):
     meta = {
         "io.modelcontextprotocol/protocolVersion": "2026-07-28",
         "io.modelcontextprotocol/clientCapabilities": {},
-        "io.modelcontextprotocol/clientInfo": {"name": "ai-core", "version": "1.1.0"},
+        "io.modelcontextprotocol/clientInfo": {"name": "ai-core", "version": __version__},
     }
     if q.language:
         meta["com.you.com/search"] = {"language": q.language.split("-")[0].upper()}
